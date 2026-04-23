@@ -24,15 +24,24 @@ def main() -> int:
                 n_attach += sum(1 for _ in sub.iterdir() if _.is_file())
     pct = f"{(n_attach / max(n_meta, 1)) * 100:.1f}"
 
+    n_inst = s.get("n_institutions", 0)
+    news_path = Path("data/processed/news_meta.csv")
+    n_news = 0
+    if news_path.exists():
+        with news_path.open(encoding="utf-8-sig") as f:
+            n_news = max(sum(1 for _ in f) - 1, 0)
+
     txt = MD.read_text(encoding="utf-8")
     txt = (txt
            .replace("{{N_META}}", f"{n_meta:,}")
+           .replace("{{N_INST}}", f"{n_inst:,}")
            .replace("{{N_FILES}}", f"{n_files}")
            .replace("{{N_ATTACH}}", f"{n_attach:,}")
+           .replace("{{N_NEWS}}", f"{n_news:,}")
            .replace("{{PCT_ATTACH}}", pct))
     MD.write_text(txt, encoding="utf-8")
-    print(f"[DONE] midterm.md 수치 주입 — meta={n_meta:,} files={n_files} "
-          f"attach={n_attach:,} ({pct}%)")
+    print(f"[DONE] midterm.md 수치 주입 — meta={n_meta:,} inst={n_inst:,} "
+          f"files={n_files} attach={n_attach:,} news={n_news:,}")
     return 0
 
 
