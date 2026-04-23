@@ -22,11 +22,12 @@ import requests
 from dotenv import load_dotenv
 from tqdm import tqdm
 
-BASE_URL = "https://apis.data.go.kr/1230000/BidPublicInfoService05"
+BASE_URL = "https://apis.data.go.kr/1230000/ad/BidPublicInfoService"
 ENDPOINT_BY_KIND = {
-    "용역": "/getBidPblancListInfoServcPPSSrch",
-    "물품": "/getBidPblancListInfoThngPPSSrch",
-    "공사": "/getBidPblancListInfoCnstwkPPSSrch",
+    "용역": "/getBidPblancListInfoServc",
+    "물품": "/getBidPblancListInfoThng",
+    "공사": "/getBidPblancListInfoCnstwk",
+    "외자": "/getBidPblancListInfoFrgcpt",
 }
 
 
