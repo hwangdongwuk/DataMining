@@ -17,6 +17,7 @@ __pycache__/
 
 # Env
 .env
+!.env.example
 .venv/
 venv/
 
