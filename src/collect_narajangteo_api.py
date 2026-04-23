@@ -1,9 +1,16 @@
-"""나라장터 입찰공고정보서비스 OpenAPI 수집기.
+"""나라장터 입찰공고정보서비스 OpenAPI 수집기 (월별 분할 + 필터).
 
 사용법:
+    # 3년치 월별 분할 수집
+    python src/collect_narajangteo_api.py \\
+        --start 20230101 --end 20251231 \\
+        --kind 용역 --split monthly \\
+        --out data/raw/narajangteo
+
+    # 단일 기간
     python src/collect_narajangteo_api.py \\
         --start 20240101 --end 20241231 \\
-        --kind 용역 --rows 100 --out data/raw/narajangteo
+        --kind 용역 --out data/raw/narajangteo
 
 환경변수:
     NARAJANGTEO_SERVICE_KEY  (.env 또는 export)
@@ -15,7 +22,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 import requests
@@ -32,7 +39,8 @@ ENDPOINT_BY_KIND = {
 
 
 def fetch_page(service_key: str, endpoint: str, start: str, end: str,
-               page_no: int, num_rows: int, timeout: int = 30) -> dict:
+               page_no: int, num_rows: int, timeout: int = 30,
+               max_retry: int = 3) -> dict:
     url = BASE_URL + endpoint
     params = {
         "serviceKey": service_key,
@@ -43,9 +51,16 @@ def fetch_page(service_key: str, endpoint: str, start: str, end: str,
         "inqryEndDt": f"{end}2359",
         "type": "json",
     }
-    r = requests.get(url, params=params, timeout=timeout)
-    r.raise_for_status()
-    return r.json()
+    last_exc = None
+    for attempt in range(max_retry):
+        try:
+            r = requests.get(url, params=params, timeout=timeout)
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            last_exc = e
+            time.sleep(2 ** attempt)
+    raise RuntimeError(f"fetch failed after {max_retry} retries: {last_exc}")
 
 
 def extract_items(payload: dict) -> tuple[list[dict], int]:
@@ -57,8 +72,27 @@ def extract_items(payload: dict) -> tuple[list[dict], int]:
     return items, total
 
 
-def collect(service_key: str, kind: str, start: str, end: str,
-            num_rows: int, out_dir: Path, sleep_sec: float = 0.2) -> Path:
+def month_ranges(start: str, end: str) -> list[tuple[str, str]]:
+    s = datetime.strptime(start, "%Y%m%d").date()
+    e = datetime.strptime(end, "%Y%m%d").date()
+    out: list[tuple[str, str]] = []
+    cur = date(s.year, s.month, 1)
+    while cur <= e:
+        if cur.month == 12:
+            nxt = date(cur.year + 1, 1, 1)
+        else:
+            nxt = date(cur.year, cur.month + 1, 1)
+        month_end = min(date(nxt.year, nxt.month, 1).toordinal() - 1, e.toordinal())
+        month_end_d = date.fromordinal(month_end)
+        month_start_d = max(cur, s)
+        out.append((month_start_d.strftime("%Y%m%d"),
+                    month_end_d.strftime("%Y%m%d")))
+        cur = nxt
+    return out
+
+
+def collect_range(service_key: str, kind: str, start: str, end: str,
+                  num_rows: int, out_dir: Path, sleep_sec: float = 0.2) -> tuple[Path, int]:
     endpoint = ENDPOINT_BY_KIND[kind]
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -67,27 +101,23 @@ def collect(service_key: str, kind: str, start: str, end: str,
     first = fetch_page(service_key, endpoint, start, end, 1, num_rows)
     items, total = extract_items(first)
     if total == 0:
-        print(f"[WARN] totalCount=0. 응답 확인: {json.dumps(first)[:400]}")
-        return out_path
+        out_path.write_text("", encoding="utf-8")
+        return out_path, 0
 
     total_pages = (total + num_rows - 1) // num_rows
-    print(f"[INFO] 총 {total}건, {total_pages}페이지 수집 시작 → {out_path}")
-
     written = 0
     with out_path.open("w", encoding="utf-8") as f:
         for it in items:
             f.write(json.dumps(it, ensure_ascii=False) + "\n")
             written += 1
-        for page in tqdm(range(2, total_pages + 1), desc="pages"):
+        for page in range(2, total_pages + 1):
             time.sleep(sleep_sec)
             payload = fetch_page(service_key, endpoint, start, end, page, num_rows)
             page_items, _ = extract_items(payload)
             for it in page_items:
                 f.write(json.dumps(it, ensure_ascii=False) + "\n")
                 written += 1
-
-    print(f"[DONE] {written}건 저장 → {out_path}")
-    return out_path
+    return out_path, written
 
 
 def parse_args() -> argparse.Namespace:
@@ -95,9 +125,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--start", required=True, help="수집 시작일 YYYYMMDD")
     p.add_argument("--end", required=True, help="수집 종료일 YYYYMMDD")
     p.add_argument("--kind", choices=list(ENDPOINT_BY_KIND), default="용역")
-    p.add_argument("--rows", type=int, default=100, help="페이지당 건수(최대 999)")
+    p.add_argument("--rows", type=int, default=500, help="페이지당 건수(최대 999)")
     p.add_argument("--out", default="data/raw/narajangteo", help="저장 디렉토리")
     p.add_argument("--sleep", type=float, default=0.2, help="요청 간 대기(초)")
+    p.add_argument("--split", choices=["none", "monthly"], default="none",
+                   help="수집 분할 방식")
     return p.parse_args()
 
 
@@ -105,19 +137,30 @@ def main() -> int:
     load_dotenv()
     key = os.getenv("NARAJANGTEO_SERVICE_KEY", "").strip()
     if not key or key.startswith("your_"):
-        print("[ERROR] NARAJANGTEO_SERVICE_KEY 미설정. .env 파일을 확인하세요.", file=sys.stderr)
+        print("[ERROR] NARAJANGTEO_SERVICE_KEY 미설정. .env 확인.", file=sys.stderr)
         return 2
 
     args = parse_args()
-    collect(
-        service_key=key,
-        kind=args.kind,
-        start=args.start,
-        end=args.end,
-        num_rows=args.rows,
-        out_dir=Path(args.out),
-        sleep_sec=args.sleep,
-    )
+    out_dir = Path(args.out)
+
+    if args.split == "monthly":
+        ranges = month_ranges(args.start, args.end)
+        total_written = 0
+        print(f"[INFO] 월별 분할 수집: {len(ranges)}개월 ({args.start}~{args.end})")
+        for s, e in tqdm(ranges, desc="months"):
+            try:
+                path, n = collect_range(key, args.kind, s, e, args.rows,
+                                        out_dir, sleep_sec=args.sleep)
+                total_written += n
+                tqdm.write(f"  {s}~{e}: {n}건 → {path.name}")
+            except Exception as exc:
+                tqdm.write(f"  [ERR] {s}~{e}: {exc}")
+            time.sleep(args.sleep)
+        print(f"[DONE] 총 {total_written}건 저장")
+    else:
+        path, n = collect_range(key, args.kind, args.start, args.end, args.rows,
+                                out_dir, sleep_sec=args.sleep)
+        print(f"[DONE] {n}건 저장 → {path}")
     return 0
 
 
