@@ -1,0 +1,185 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><style>
+@page { size: A4 landscape; margin: 16mm 18mm; }
+body { font-family: -apple-system, "Apple SD Gothic Neo", sans-serif;
+       color: #222; line-height: 1.5; font-size: 14pt; }
+h1 { color: #264653; border-bottom: 3px solid #2a9d8f; padding-bottom: 6px;
+     page-break-before: always; }
+h1:first-of-type { page-break-before: avoid; }
+h2 { color: #2a9d8f; margin-top: 14px; }
+table { border-collapse: collapse; width: 100%; font-size: 11pt; margin: 6px 0; }
+th, td { border: 1px solid #bbb; padding: 4px 8px; }
+th { background: #2a9d8f; color: white; }
+pre { background: #263238; color: #eee; padding: 10px; border-radius: 4px;
+      font-size: 11pt; overflow: auto; }
+code { background: #eef; padding: 1px 4px; border-radius: 3px; font-size: 12pt; }
+img { max-height: 60vh; display: block; margin: 10px auto; }
+hr { display: none; }
+</style></head><body><hr />
+<p>title: 공공 RFP × 산업 Pain Point 데이터 허브
+subtitle: 데이터마이닝 중간 발표 · 황동욱 · 2024720459
+date: 2026-04-23</p>
+<hr />
+<h1>1 · 문제 정의</h1>
+<h2>제안서 작성의 반복 비효율</h2>
+<ul>
+<li>GA · 보험 · 금융 IT 기획/PM 실무에서 제안서 작성 시
+  <strong>고객 Pain Point 파악 + Win Strategy 수립에 수일 소요</strong></li>
+<li>분석은 사람이 수작업 — 매번 처음부터</li>
+<li><strong>데이터로 자동화하면 제안팀 실무 시간을 획기적으로 단축</strong> 가능</li>
+</ul>
+<hr />
+<h1>2 · 연구 질문</h1>
+<ol>
+<li>나라장터 RFP · 산업 뉴스 · 규제 공시를 통합 분석하면
+   <strong>산업별 반복 Pain Point</strong> 를 정량화할 수 있는가?</li>
+<li>도출된 Pain Point가 <strong>ISP · PI · POC · BPR · PMO</strong> 중
+   어느 컨설팅 유형 수요와 연결되는지 자동 분류할 수 있는가?</li>
+<li><strong>Win Strategy 핵심 포인트</strong> 를 자동 추출해 제안서 작성에 활용할 수 있는가?</li>
+</ol>
+<p>W06 피드백 반영 공식: <strong>[대상] + [변수] + [범위] + [방향성]</strong></p>
+<hr />
+<h1>3 · 데이터 소스</h1>
+<table>
+<thead>
+<tr>
+<th>소스</th>
+<th>유형</th>
+<th>건수(잠정)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>나라장터 입찰공고 (용역)</td>
+<td>REST API</td>
+<td><strong>312,037건</strong></td>
+</tr>
+<tr>
+<td>첨부 PDF / HWP (샘플)</td>
+<td>파일 다운로드</td>
+<td>198건</td>
+</tr>
+<tr>
+<td>금감원 RSS + 네이버 뉴스 API</td>
+<td>RSS / API</td>
+<td>(W10 예정)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>기간 <strong>2023-01-01 ~ 2025-12-31</strong> · 수요기관 <strong>14,962곳</strong></li>
+<li>Key-based Join: <code>bidNtceNo</code></li>
+</ul>
+<hr />
+<h1>4 · 파이프라인 (AWS 데이터허브 매핑)</h1>
+<pre><code>수집          저장          처리           분석          시각화
+─────         ─────         ─────          ─────         ─────
+requests  →   S3 + 로컬  →  pdfplumber  →  TF-IDF    →   Streamlit
+tqdm          (2.1 GB)      hwp5txt         sklearn.LDA    plotly
+                            kiwipiepy
+</code></pre>
+<ul>
+<li>월별 분할 수집(36개월) · 지수 백오프 재시도 · 999rows/page</li>
+<li>Python 3.14 호환 이슈로 <code>konlpy</code> / <code>gensim</code> → <strong><code>kiwipiepy</code> + <code>sklearn LDA</code></strong></li>
+</ul>
+<hr />
+<h1>5 · 수집 결과 — 산업 분포</h1>
+<p><img alt="산업 분포" src="figures/03_industry_pie.png" />{ width=55% }</p>
+<ul>
+<li>기타 89.2 % · IT 8.3 % · 보험 2.2 % · 금융 0.4 %</li>
+<li>"기타" 비중이 큼 → 산업 태그 룰 보강 필요 (W09~W10)</li>
+</ul>
+<hr />
+<h1>6 · 컨설팅 유형 교차 분석</h1>
+<p><img alt="industry × consulting" src="figures/04_industry_consulting_heatmap.png" />{ width=80% }</p>
+<ul>
+<li><strong>구축 23,236건</strong> · PMO 4,510 · POC 1,515 · ISP 448</li>
+<li>IT 업종은 구축 중심, PMO 수요는 서울시·국토교통부 발주가 견인</li>
+</ul>
+<hr />
+<h1>7 · 공고명 키워드 Top 30</h1>
+<p><img alt="title keywords" src="figures/07_title_keywords.png" />{ width=85% }</p>
+<ul>
+<li>상위: <strong>시스템 · 구축 · 유지관리 · 운영 · 점검</strong></li>
+<li>제안서 자동화에서 높은 빈도 키워드가 곧 Pain Point 후보군</li>
+</ul>
+<hr />
+<h1>8 · AWS 인프라 (현재 구성)</h1>
+<table>
+<thead>
+<tr>
+<th>서비스</th>
+<th>상태</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EC2 t3.micro <code>datamining_demo</code></td>
+<td>✅ running (13.239.237.95)</td>
+</tr>
+<tr>
+<td>S3 <code>datamining-257925264162-raw</code></td>
+<td>✅ 25 objects / 2.09 GB</td>
+</tr>
+<tr>
+<td>IAM <code>hwangdonguk</code></td>
+<td>✅ Access Key 발급 · S3FullAccess</td>
+</tr>
+<tr>
+<td>Security Group <code>sg-0b7c854caa4d4e287</code></td>
+<td>✅ SSH 22 + Streamlit 8501</td>
+</tr>
+<tr>
+<td>Budgets 알림 $5/월</td>
+<td>✅ 설정</td>
+</tr>
+</tbody>
+</table>
+<p>프리티어 내 운영, 비용 $0~5/월 예상.</p>
+<hr />
+<h1>9 · 라이브 데모 (Streamlit)</h1>
+<pre><code>http://13.239.237.95:8501
+</code></pre>
+<ul>
+<li>탭 ① 개요 · ② 월별 추이 · ③ 키워드 · ④ 공고 검색</li>
+<li>좌측 필터: 연도 · 산업 · 컨설팅 유형 · 키워드 부분일치</li>
+</ul>
+<p><em>(시연: 연도 필터 → 보험 산업 → ISP 교차 → Top 키워드 확인)</em></p>
+<hr />
+<h1>10 · 향후 계획</h1>
+<table>
+<thead>
+<tr>
+<th>주차</th>
+<th>작업</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W09</td>
+<td>첨부 PDF/HWP 전수 다운·본문 추출, 금감원 RSS + 네이버 뉴스 결합</td>
+</tr>
+<tr>
+<td>W10</td>
+<td>TF-IDF + sklearn LDA 토픽모델링 (8~12 토픽)</td>
+</tr>
+<tr>
+<td>W11</td>
+<td>규제 → 발주 시차 분석 · Win Strategy 룰 정의</td>
+</tr>
+<tr>
+<td>W12</td>
+<td>Streamlit 대시보드 고도화 (Win Strategy 추출기)</td>
+</tr>
+<tr>
+<td>W13</td>
+<td>EC2 배포 + 도메인 · HTTPS</td>
+</tr>
+<tr>
+<td>W14</td>
+<td>최종 발표 · 라이브 시연</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>GitHub: https://github.com/hwangdongwuk/DataMining</li>
+</ul></body></html>
