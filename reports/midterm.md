@@ -40,10 +40,10 @@ W06 "다중 데이터 소스 결합" 피드백에 따라 **Key-based Join(bidNtc
 | 3 | 금감원 RSS + 네이버 뉴스 API | RSS / REST API | fss.or.kr / Naver | 📅 W10 예정 |
 
 ### 2.2 수집 규모 *(실행 후 실측으로 자동 갱신)*
-- **공고 메타 (용역)**: `{{N_META}}` 건
+- **공고 메타 (용역)**: `312,037` 건
 - **기간**: 2023-01-01 ~ 2025-12-31 (36개월)
-- **월별 분할 JSONL**: `{{N_FILES}}` 개 (`data/raw/narajangteo/*.jsonl`)
-- **첨부 파일 샘플**: `{{N_ATTACH}}` 건 (전체의 약 `{{PCT_ATTACH}}` %)
+- **월별 분할 JSONL**: `20` 개 (`data/raw/narajangteo/*.jsonl`)
+- **첨부 파일 샘플**: `197` 건 (전체의 약 `0.1` %)
 
 ### 2.3 수집 코드 핵심
 ```python
