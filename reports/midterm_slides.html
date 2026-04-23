@@ -1,0 +1,420 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
+<title>중간보고서 슬라이드</title>
+<style>
+@page { size: A4 landscape; margin: 14mm 18mm; }
+html, body { margin: 0; padding: 0; }
+body { font-family: -apple-system, "Apple SD Gothic Neo", "AppleGothic",
+       sans-serif; color: #1d3557; line-height: 1.55;
+       font-size: 13.5pt; }
+
+/* 섹션(##) 마다 새 페이지 */
+h2 { page-break-before: always; color: #264653;
+     border-bottom: 3px solid #2a9d8f; padding-bottom: 6px;
+     margin-top: 0; font-size: 22pt; }
+h1 + p, h1 + ul { page-break-after: always; }
+h1 { font-size: 26pt; color: #1d3557; margin-top: 0;
+     border-bottom: none; padding-bottom: 0; }
+/* 표지에서는 h1 뒤에 바로 내용, 그 다음 섹션부터 새 페이지 */
+h1 + p { font-size: 14pt; color: #555; }
+
+h3 { color: #2a9d8f; font-size: 16pt; margin-top: 16px;
+     border-bottom: 1px solid #cde; padding-bottom: 3px; }
+h4 { color: #444; font-size: 14pt; }
+
+table { border-collapse: collapse; width: 100%; margin: 10px 0;
+        font-size: 11.5pt; page-break-inside: avoid; }
+th, td { border: 1px solid #bbb; padding: 4px 9px; text-align: left; }
+th { background: #2a9d8f; color: white; }
+tr:nth-child(even) td { background: #f3f9f7; }
+
+code { background: #eef3f7; padding: 1px 4px; border-radius: 3px;
+       font-family: "SF Mono", Menlo, monospace; font-size: 11pt; }
+pre { background: #263238; color: #eee; padding: 10px 14px;
+      border-radius: 5px; font-size: 10.5pt; overflow: auto;
+      page-break-inside: avoid; }
+pre code { background: transparent; color: inherit; font-size: 10.5pt; }
+
+blockquote { border-left: 4px solid #e76f51; padding: 4px 12px;
+             color: #555; margin: 10px 0; background: #fff3ef; }
+ul, ol { margin: 8px 0 8px 22px; }
+li { margin: 3px 0; }
+img { max-width: 80%; max-height: 55vh; display: block;
+      margin: 10px auto; }
+hr { display: none; }
+
+/* 페이지 하단 소제목용 */
+.footer { position: fixed; bottom: 8mm; right: 14mm;
+          font-size: 9pt; color: #888; }
+</style></head><body><h1>데이터마이닝 중간 보고서</h1>
+<ul>
+<li><strong>학번·이름</strong>: 2024720459 황동욱</li>
+<li><strong>과목</strong>: 성균관대학원 2-1 데이터마이닝</li>
+<li><strong>주제</strong>: 공공 RFP × 산업뉴스 × 규제 데이터 기반 산업별 Pain Point 분석 및 컨설팅 프로세스(ISP·PI·POC·BPR)별 제안 전략 자동화 데이터 허브 구축</li>
+<li><strong>작성일</strong>: 2026-04-23</li>
+<li><strong>GitHub</strong>: https://github.com/hwangdongwuk/DataMining</li>
+</ul>
+<hr />
+<h2>① 프로젝트 개요</h2>
+<h3>1.1 연구 질문</h3>
+<ol>
+<li>나라장터 RFP 본문·산업 뉴스·규제 공시를 통합 분석하면 <strong>산업별 반복 Pain Point를 정량화</strong>할 수 있는가?</li>
+<li>도출된 Pain Point가 <strong>ISP·PI·POC·BPR·PMO 중 어느 컨설팅 유형 수요와 연결</strong>되는지 자동 분류할 수 있는가?</li>
+<li>이를 통해 <strong>제안 전략(Win Strategy) 핵심 포인트를 자동 추출</strong>하여 제안서 작성에 활용할 수 있는가?</li>
+</ol>
+<h3>1.2 선정 이유</h3>
+<ul>
+<li>보험·금융 IT 기획/PM 실무에서 제안서 작성 시 Pain Point 파악과 Win Strategy 수립에 <strong>수일이 소요</strong>되는 비효율을 <strong>데이터 파이프라인으로 자동화</strong>.</li>
+<li>수업의 "데이터 허브" 콘셉트에 부합하며, 최종 Streamlit 허브는 제안팀 실무 도구로 즉시 전환 가능.</li>
+</ul>
+<h3>1.3 W02 피드백 반영</h3>
+<p>W06 강의 피드백("좋은 연구 질문 자가 진단")을 적용하여 질문을 구체화:
+- <strong>[구체적 대상]</strong> 나라장터 <strong>용역 공고</strong> (3년치, 2023~2025)
+- <strong>[측정 가능한 변수]</strong> 공고 건수, 예산(presmptPrce), 키워드 빈도, 컨설팅 유형 태그
+- <strong>[시간/공간 범위]</strong> 2023-01-01 ~ 2025-12-31 (36개월)
+- <strong>[방향성]</strong> 산업별 Pain Point 상위 키워드 비교, 컨설팅 유형별 수요 추이</p>
+<p>W06 "다중 데이터 소스 결합" 피드백에 따라 <strong>Key-based Join(bidNtceNo)</strong> 으로 메타 + 첨부 본문 + (향후) 금감원 RSS · 네이버 뉴스 결합 설계.</p>
+<hr />
+<h2>② 데이터 수집 결과</h2>
+<h3>2.1 데이터 소스</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>소스</th>
+<th>유형</th>
+<th>접근</th>
+<th>상태</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>나라장터 입찰공고 OpenAPI (용역)</td>
+<td>REST API (JSON)</td>
+<td>data.go.kr 서비스키</td>
+<td>✅ 수집 완료</td>
+</tr>
+<tr>
+<td>2</td>
+<td>나라장터 첨부 PDF/HWP</td>
+<td>파일 다운로드</td>
+<td>API 응답 내 URL</td>
+<td>✅ 샘플 완료</td>
+</tr>
+<tr>
+<td>3</td>
+<td>네이버 뉴스 검색 API</td>
+<td>REST API (JSON)</td>
+<td>developers.naver.com</td>
+<td>✅ 수집 완료</td>
+</tr>
+<tr>
+<td>4</td>
+<td>금융위원회(FSC) RSS</td>
+<td>RSS 2.0</td>
+<td>fsc.go.kr (보도·공지·행정예고)</td>
+<td>✅ 수집 완료</td>
+</tr>
+</tbody>
+</table>
+<h3>2.2 수집 규모</h3>
+<ul>
+<li><strong>나라장터 공고 메타 (용역)</strong>: <code>420,104</code> 건 · 수요기관 <code>16,551</code> 곳</li>
+<li><strong>기간</strong>: 2023-01-01 ~ 2025-11-25 (27개월, 학습 일정상 조기 중단)</li>
+<li><strong>월별 분할 JSONL</strong>: <code>27</code> 개 (<code>data/raw/narajangteo/*.jsonl</code>)</li>
+<li><strong>나라장터 첨부 파일(샘플)</strong>: <code>197</code> 건 → PDF 본문 173건 성공 추출</li>
+<li><strong>네이버 뉴스</strong>: <code>13,765</code> 건 (15 키워드 × 10페이지 · 중복 제거 후)</li>
+<li><strong>금융위원회 RSS</strong>: <code>30</code> 건 (보도 10 · 공지 10 · 행정예고 10)</li>
+</ul>
+<h3>2.3 수집 코드 핵심</h3>
+<pre><code class="language-python"># src/collect_narajangteo_api.py
+BASE_URL = &quot;https://apis.data.go.kr/1230000/ad/BidPublicInfoService&quot;
+# 월별 분할 + 페이지네이션(999rows) + 지수 백오프 재시도
+for s, e in month_ranges(&quot;20230101&quot;, &quot;20251231&quot;):
+    for page in range(1, total_pages + 1):
+        payload = fetch_page(key, endpoint, s, e, page, 999)
+        append_jsonl(payload.items())
+        time.sleep(0.1)
+</code></pre>
+<h3>2.4 주요 필드 (66개 중 핵심 17)</h3>
+<table>
+<thead>
+<tr>
+<th>필드</th>
+<th>의미</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bidNtceNo / bidNtceOrd</td>
+<td>공고번호 / 차수 (PK)</td>
+</tr>
+<tr>
+<td>bidNtceNm</td>
+<td>공고명</td>
+</tr>
+<tr>
+<td>bidNtceDt</td>
+<td>공고일시</td>
+</tr>
+<tr>
+<td>ntceInsttNm / dminsttNm</td>
+<td>공고기관 / 수요기관</td>
+</tr>
+<tr>
+<td>presmptPrce</td>
+<td>추정가격(원)</td>
+</tr>
+<tr>
+<td>bidBeginDt / bidClseDt / opengDt</td>
+<td>입찰 시작/마감/개찰</td>
+</tr>
+<tr>
+<td>ntceSpecDocUrl1~10</td>
+<td>첨부파일 URL (최대 10개)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>③ 데이터 전처리</h2>
+<h3>3.1 파이프라인</h3>
+<ol>
+<li><strong>JSONL 통합 로드</strong> → <code>pd.DataFrame</code> (66컬럼, 월별 36파일 concat)</li>
+<li><strong>중복 제거</strong>: <code>(bidNtceNo, bidNtceOrd)</code> 기준</li>
+<li><strong>타입 변환</strong>: <code>bidNtceDt</code> → datetime, 가격 필드 → numeric</li>
+<li><strong>결측치 처리</strong>:</li>
+<li><code>presmptPrce</code> 결측은 NaN 유지 (미확정 공고 특성 반영, 대체 X)</li>
+<li>첨부 URL 빈 문자열 → 누락으로 처리</li>
+<li><strong>파생 변수</strong>:</li>
+<li><code>year</code>, <code>year_month</code></li>
+<li><code>industry</code>: 공고명 키워드 매칭 (보험 / 금융 / IT / 기타)</li>
+<li><code>consulting_type</code>: ISP / PI / POC / BPR / PMO / 구축 / 기타</li>
+<li><strong>첨부 본문 추출</strong>: <code>pdfplumber</code> (PDF), <code>hwp5txt</code> (HWP)</li>
+<li><strong>형태소 분석</strong>: <code>kiwipiepy</code> 로 명사 추출 (길이 ≥ 2)</li>
+</ol>
+<blockquote>
+<p>Python 3.14 환경에서 <code>konlpy</code> / <code>gensim</code> 빌드 실패 → 순수 Python <code>kiwipiepy</code> + <code>sklearn.decomposition.LatentDirichletAllocation</code> 으로 대체.</p>
+</blockquote>
+<h3>3.2 Before / After</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>Before (raw JSONL)</th>
+<th>After (rfp_meta.csv)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>스키마</td>
+<td>66 컬럼 혼재</td>
+<td>핵심 17컬럼 + 파생 5컬럼</td>
+</tr>
+<tr>
+<td>날짜</td>
+<td>문자열</td>
+<td><code>datetime64[ns]</code></td>
+</tr>
+<tr>
+<td>중복</td>
+<td>재공고·차수 혼재</td>
+<td><code>(bidNtceNo, bidNtceOrd)</code> 단위 정리</td>
+</tr>
+<tr>
+<td>분류</td>
+<td>없음</td>
+<td><code>industry × consulting_type</code> 태그</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>④ 탐색적 데이터 분석 (EDA)</h2>
+<p><em>(<code>notebooks/01_eda.ipynb</code> 와 <code>reports/figures/</code> 에서 자동 생성)</em></p>
+<h3>4.1 기초 통계</h3>
+<ul>
+<li><strong>연도별 공고 건수</strong>: 2023 / 2024 / 2025 비교 막대그래프 → <code>figures/count_by_year.png</code></li>
+<li><strong>월별 추이</strong>: 계절성(연말 몰림 등) 확인 → <code>figures/count_by_month.png</code></li>
+<li><strong>예산 분포</strong>: <code>presmptPrce</code> 히스토그램 (로그 스케일) + 중앙값/IQR</li>
+</ul>
+<h3>4.2 카테고리 분포</h3>
+<ul>
+<li><strong>산업별 비율</strong>: 보험 / 금융 / IT / 기타 파이 차트</li>
+<li><strong>컨설팅 유형 교차표</strong>: <code>industry × consulting_type</code> 히트맵</li>
+</ul>
+<h3>4.3 상관 / 공통 출현</h3>
+<ul>
+<li>공고명 상위 TF-IDF 키워드 워드클라우드 (전체 / 산업별 3종)</li>
+<li>기관별 발주 랭킹 Top 20</li>
+</ul>
+<hr />
+<h2>⑤ 중간 인사이트 / 가설</h2>
+<p><em>(데이터 확보 후 1차 검증 결과 갱신)</em></p>
+<p>예상 가설:
+- <strong>H1</strong>: 2023→2025 동안 "AI / 데이터 / 클라우드" 키워드 공고 <strong>비중이 증가</strong> 한다.
+- <strong>H2</strong>: 금융·보험 업종에서 "ISP → 구축" 순으로 <strong>발주가 시간차를 두고 이어지는 패턴</strong> 이 존재한다.
+- <strong>H3</strong>: 공고명에 "혁신 / 재설계 / 고도화" 키워드가 포함된 공고가 그렇지 않은 공고보다 <strong>평균 예산이 유의하게 크다</strong>.</p>
+<hr />
+<h2>⑥ 향후 계획</h2>
+<table>
+<thead>
+<tr>
+<th>주차</th>
+<th>작업</th>
+<th>산출물</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W09</td>
+<td>첨부 PDF/HWP 전수 다운·본문 추출, 뉴스·규제 RSS 결합</td>
+<td><code>rfp_text.csv</code>, <code>news.csv</code></td>
+</tr>
+<tr>
+<td>W10</td>
+<td>TF-IDF + LDA (sklearn) 토픽 모델링 8~12 토픽</td>
+<td><code>topics.json</code></td>
+</tr>
+<tr>
+<td>W11</td>
+<td>규제 → 발주 시차 분석, Win Strategy 포인트 룰 정의</td>
+<td>시차 분석 표</td>
+</tr>
+<tr>
+<td>W12</td>
+<td>Streamlit 대시보드 고도화 (워드클라우드 · 타임라인 · Win Strategy 추출기)</td>
+<td><code>app_streamlit.py</code></td>
+</tr>
+<tr>
+<td>W13</td>
+<td>EC2 배포 + CloudFront/Route53 검토</td>
+<td>공개 URL</td>
+</tr>
+<tr>
+<td>W14</td>
+<td>최종 발표 및 라이브 시연</td>
+<td>발표자료, demo URL</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>⑦ AWS 인프라 구성</h2>
+<h3>7.1 아키텍처 (W07 "데이터 허브 = AWS" 5단계 매핑)</h3>
+<pre><code>┌─── 수집 ─────────────┐ ┌─── 저장 ───┐ ┌── 처리 ──┐ ┌── 분석 ──┐ ┌── 시각화 ──┐
+│ Lambda + EventBridge │→│ S3 + RDS  │→│ Lambda   │→│ SageMaker│→│ EC2 +      │
+│  (나라장터 API 호출) │ │ (원본/가공)│ │ (전처리) │ │  / EC2   │ │ Streamlit  │
+└──────────────────────┘ └───────────┘ └──────────┘ └──────────┘ └────────────┘
+</code></pre>
+<h3>7.2 현재 구성 상태</h3>
+<table>
+<thead>
+<tr>
+<th>서비스</th>
+<th>상태</th>
+<th>용도</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS 계정</td>
+<td>✅ 257925264162</td>
+<td>—</td>
+<td>프리티어</td>
+</tr>
+<tr>
+<td>IAM 사용자 <code>hwangdonguk</code></td>
+<td>✅ 활성</td>
+<td>CLI/API 접근</td>
+<td>Access Key 발급 완료</td>
+</tr>
+<tr>
+<td>EC2 t3.micro <code>datamining_demo</code></td>
+<td>✅ 실행 중</td>
+<td>분석·Streamlit 서빙</td>
+<td>ap-southeast-2a, Amazon Linux 2023</td>
+</tr>
+<tr>
+<td>Security Group <code>sg-0b7c854caa4d4e287</code></td>
+<td>✅ SSH 허용</td>
+<td>22번 포트, 내 IP(1.220.29.220/32) 한정</td>
+<td>—</td>
+</tr>
+<tr>
+<td>S3 버킷 <code>datamining-257925264162-raw</code></td>
+<td>✅ 생성</td>
+<td>raw/processed/final 계층</td>
+<td>퍼블릭 차단, 버저닝 On</td>
+</tr>
+<tr>
+<td>EventBridge + Lambda</td>
+<td>📅 W11 예정</td>
+<td>일일 자동 수집</td>
+<td>cron(0 0 ? * MON-FRI *)</td>
+</tr>
+<tr>
+<td>SageMaker / Colab GPU</td>
+<td>📅 W12 예정</td>
+<td>토픽 모델링</td>
+<td>Studio 프리티어</td>
+</tr>
+</tbody>
+</table>
+<h3>7.3 비용 관리</h3>
+<ul>
+<li>AWS Budgets <strong>$5/월 알림 필수 설정</strong> (W07 권고)</li>
+<li>사용 종료 시 인스턴스 <strong>Terminate</strong> (Stop만 하면 EBS 과금 지속)</li>
+<li>S3 버킷 <strong>Private 고정</strong> (Presigned URL로 임시 공유)</li>
+<li><strong>NAT Gateway 사용 안 함</strong> ($30+/월 과금 회피)</li>
+</ul>
+<hr />
+<h2>부록 A. 리포지토리 구조</h2>
+<pre><code>DataMining/
+├── .env                 # API 키 (gitignore)
+├── .gitignore
+├── README.md
+├── requirements.txt
+├── data/
+│   ├── raw/
+│   │   ├── narajangteo/    # *.jsonl (월별 36파일)
+│   │   └── rfp_files/      # {bidNtceNo}/*.pdf,hwp
+│   └── processed/
+│       ├── rfp_meta.csv
+│       ├── rfp_text.csv
+│       └── rfp_tokens.csv
+├── notebooks/
+│   └── 01_eda.ipynb
+├── reports/
+│   ├── midterm.md          # 본 문서
+│   ├── midterm.pdf         # 제출본
+│   └── figures/*.png
+├── src/
+│   ├── collect_narajangteo_api.py
+│   ├── download_attachments.py
+│   ├── preprocess_rfp.py
+│   ├── eda.py
+│   └── app_streamlit.py
+└── scripts/
+    └── aws_bootstrap.sh    # S3 버킷 생성·업로드 자동화
+</code></pre>
+<h2>부록 B. 실행 방법</h2>
+<pre><code class="language-bash"># 1) 환경
+python3 -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -r requirements.txt
+
+# 2) 3년치 수집 (월별 분할, 999rows)
+python src/collect_narajangteo_api.py \
+  --start 20230101 --end 20251231 \
+  --kind 용역 --split monthly --rows 999
+
+# 3) 첨부 샘플 다운로드 (500건)
+python src/download_attachments.py --sample 500
+
+# 4) 전처리 &amp; 태깅
+python src/preprocess_rfp.py
+
+# 5) AWS S3 업로드
+bash scripts/aws_bootstrap.sh
+
+# 6) 대시보드 실행
+streamlit run src/app_streamlit.py
+</code></pre><div class="footer">데이터마이닝 중간보고서 · 황동욱 2024720459</div></body></html>
