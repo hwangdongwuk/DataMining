@@ -1,201 +1,249 @@
 <!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
 <title>중간보고 발표자료</title><style>
-@page { size: A4 landscape; margin: 16mm 22mm; }
+@page { size: A4 landscape; margin: 12mm 16mm; }
 html, body { margin: 0; padding: 0; }
 body { font-family: -apple-system, "Apple SD Gothic Neo", "AppleGothic",
-       sans-serif; color: #222; line-height: 1.6; font-size: 15pt; }
+       sans-serif; color: #222; line-height: 1.55; font-size: 14pt; }
 
 /* 표지 */
-h1 { font-size: 32pt; color: #1d3557; margin: 0 0 14px 0;
-     border-bottom: 4px solid #2a9d8f; padding-bottom: 10px; }
+h1 { font-size: 30pt; color: #1d3557; margin: 0 0 14px 0;
+     border-bottom: 4px solid #2a9d8f; padding-bottom: 10px;
+     page-break-after: always; }
 h1 + h3 { font-size: 18pt; color: #2a9d8f; border: none;
           margin-top: 20px; padding: 0; }
-h1 + h3 + p { font-size: 16pt; color: #444; margin-top: 40px; line-height: 2; }
+h1 + h3 + p { font-size: 15pt; color: #444; margin-top: 40px; line-height: 2; }
 
-/* 각 ## = 새 슬라이드 */
+/* 슬라이드 구분 */
 h2 { page-break-before: always; color: #1d3557;
-     border-bottom: 3px solid #2a9d8f; padding-bottom: 8px;
-     margin: 0 0 16px 0; font-size: 24pt; }
-h1 { page-break-after: always; }
+     border-bottom: 3px solid #2a9d8f; padding-bottom: 6px;
+     margin: 0 0 12px 0; font-size: 22pt; }
 
-/* 소제목 */
-h3 { color: #2a9d8f; font-size: 16pt; margin-top: 16px;
-     margin-bottom: 6px; }
+h3 { color: #2a9d8f; font-size: 15pt; margin-top: 10px;
+     margin-bottom: 5px; }
 
-ul, ol { margin: 4px 0 10px 22px; }
-li { margin: 4px 0; font-size: 14pt; }
-li li { font-size: 13pt; color: #555; }
+ul, ol { margin: 4px 0 8px 22px; }
+li { margin: 3px 0; font-size: 13.5pt; }
+li li { font-size: 12.5pt; color: #555; }
 
 strong { color: #e76f51; }
 
 code { background: #eef3f7; padding: 1px 5px; border-radius: 3px;
        font-family: "SF Mono", Menlo, monospace; font-size: 12pt; }
+pre { background: #1d3557; color: #f1faee; padding: 10px 14px;
+      border-radius: 5px; font-size: 11.5pt; font-family: "SF Mono", Menlo, monospace;
+      white-space: pre; overflow: auto; page-break-inside: avoid; }
+pre code { background: transparent; color: inherit; font-size: 11.5pt; }
+
+img { display: block; margin: 6px auto; max-height: 62vh; max-width: 95%; }
 
 hr { display: none; }
 
-.footer { position: fixed; bottom: 10mm; right: 22mm;
-          font-size: 10pt; color: #888; }
+.footer { position: fixed; bottom: 7mm; right: 16mm;
+          font-size: 9pt; color: #999; }
 </style></head>
-<body><h1>공공 RFP Pain Point 허브</h1>
+<body><h1>공공 RFP × 산업 Pain Point 데이터 허브</h1>
 <h3>데이터마이닝 중간 보고</h3>
 <p>빅데이터학과
 황동욱 (2024720459)</p>
 <hr />
-<h2>프로젝트 개요</h2>
-<h3>연구주제</h3>
+<h2>문제 정의</h2>
+<h3>실무 Pain Point</h3>
 <ul>
-<li>공공 RFP × 산업뉴스 × 규제 데이터 기반 <strong>산업별 Pain Point 분석</strong> 및
-  컨설팅 프로세스(ISP·PI·POC·BPR)별 <strong>제안 전략 자동화 데이터 허브 구축</strong></li>
+<li>GA · 보험 · 금융 IT 기획/PM 현장에서 제안서 1건 작성에 <strong>3~5일</strong> 소요</li>
+<li>담당자마다 매번 <strong>고객 Pain Point 수동 분석</strong> → 재사용성 낮음</li>
+<li><strong>Win Strategy 가설 수립</strong>이 경험 의존적 → 신입 입문 장벽 높음</li>
 </ul>
-<h3>연구질문</h3>
+<h3>본 프로젝트의 질문 (수식화)</h3>
+<pre><code>  산업별 Pain Point(i) =  f( RFP 키워드 빈도,  뉴스 언급 빈도,  규제 공시 시차 )
+
+  컨설팅 유형(j)       =  argmax  P( j | Pain Point 패턴, 공고명 토큰 )
+
+  Win Strategy 포인트  =  top-k( TF-IDF × 예산 가중  ×  시차 상관 )
+</code></pre>
+<h3>기대 효과</h3>
 <ul>
-<li>나라장터 RFP · 산업 뉴스 · 규제 공시를 통합 분석하면
-  <strong>산업별 반복 Pain Point</strong> 를 정량화할 수 있는가?</li>
-<li>도출된 Pain Point가 <strong>ISP · PI · POC · BPR · PMO</strong> 중 어느 컨설팅
-  유형 수요와 연결되는지 자동 분류할 수 있는가?</li>
-<li><strong>Win Strategy 핵심 포인트</strong> 를 자동 추출해 제안서 작성에 활용할 수 있는가?</li>
-</ul>
-<h3>선정이유</h3>
-<ul>
-<li>보험·금융 IT 기획/PM 실무 경험 기반 관심</li>
-<li>제안서 작성 시 Pain Point 파악·Win Strategy 수립에 수일 소요되는 비효율</li>
-<li>데이터 파이프라인으로 자동화 시 제안팀 실무 도구로 즉시 전환 가능</li>
+<li>제안팀 실무 도구로 즉시 전환 가능한 <strong>Streamlit 대시보드</strong></li>
+<li>반복 업무 시간 <strong>수일 → 수시간</strong> 단축 가설</li>
 </ul>
 <hr />
-<h2>데이터 수집</h2>
-<h3>수집방법</h3>
+<h2>연구 질문</h2>
 <ol>
-<li><strong>data.go.kr</strong> 에서 나라장터 OpenAPI 활용 신청 → 서비스키 발급</li>
-<li><strong>developers.naver.com</strong> 에서 검색 API Client ID/Secret 발급</li>
-<li>Python <code>requests</code> + <code>feedparser</code> 로 API 호출 → JSONL 저장</li>
-<li>AWS S3 버킷(<code>datamining-257925264162-raw</code>) 에 원본 일괄 저장</li>
+<li>
+<p>나라장터 RFP · 산업 뉴스 · 규제 공시를 통합 분석하면
+   <strong>산업별 반복 Pain Point</strong> 를 정량화할 수 있는가?</p>
+</li>
+<li>
+<p>도출된 Pain Point가
+   <strong>ISP · PI · POC · BPR · PMO</strong> 중 어느 컨설팅 유형 수요와 연결되는가?</p>
+</li>
+<li>
+<p><strong>Win Strategy 핵심 포인트</strong> 를
+   자동 추출해 제안서 작성에 활용할 수 있는가?</p>
+</li>
 </ol>
-<h3>수집 카테고리 (Key-based Join, 기본키 = <code>bidNtceNo</code>)</h3>
+<h3>W06 피드백 반영 공식</h3>
+<pre><code>  [구체적 대상]   +   [측정 가능한 변수]   +   [시간·공간 범위]   +   [방향성]
+   └ 나라장터 용역    └ 공고 건수·예산·키워드     └ 2023-01 ~ 2025-11       └ 증가·차이·상관
+</code></pre>
+<hr />
+<h2>5단계 파이프라인</h2>
+<p><img alt="pipeline flow" src="figures/10_pipeline_flow.png" /></p>
+<h3>단계별 산출물</h3>
 <ul>
-<li><strong>나라장터 입찰공고</strong> (용역) — 메타 66필드</li>
-<li><strong>첨부 PDF/HWP</strong> — 공고별 최대 10개 URL</li>
-<li><strong>네이버 뉴스</strong> — 15개 키워드 (ISP·BPR·PMO·PoC·핀테크·FDS 등)</li>
-<li><strong>금융위원회 RSS</strong> — 보도·공지·행정예고</li>
-</ul>
-<h3>수집 규모</h3>
-<ul>
-<li>나라장터: <strong>420,104건</strong> · 수요기관 <strong>16,551곳</strong> · 2023-01 ~ 2025-11 (27개월)</li>
-<li>나라장터 첨부 샘플: <strong>197건</strong> → PDF 본문 추출 <strong>173건</strong></li>
-<li>네이버 뉴스: <strong>13,765건</strong> (중복 제거 후)</li>
-<li>금융위원회 RSS: <strong>30건</strong></li>
-</ul>
-<h3>제약</h3>
-<ul>
-<li>나라장터 API 응답 속도 한계 → 월별 분할·지수 백오프 재시도로 대응</li>
-<li>네이버 검색 API: 키워드당 <code>start</code> 최대 1000</li>
-<li>Python 3.14 환경에서 <code>konlpy</code> / <code>gensim</code> 빌드 실패 → <code>kiwipiepy</code> + <code>sklearn.LDA</code> 로 대체</li>
+<li>① 수집 → JSONL 27개 월별 분할 파일</li>
+<li>② 저장 → S3 총 25객체 · <strong>2.1 GB</strong></li>
+<li>③ 처리 → CSV 3종 (<code>rfp_meta</code>, <code>rfp_text</code>, <code>news_meta</code>)</li>
+<li>④ 분석 → TF-IDF · LDA · 시차 분석 (W10~W12 예정)</li>
+<li>⑤ 시각화 → Streamlit 4탭 (개요·추이·키워드·검색)</li>
 </ul>
 <hr />
-<h2>데이터 전처리</h2>
-<h3>1) 결측치 처리</h3>
+<h2>Key-based Join 설계</h2>
+<p><img alt="key join" src="figures/12_key_join.png" /></p>
+<h3>통합 키 전략</h3>
 <ul>
-<li>추정가격(<code>presmptPrce</code>) 결측 → NaN 유지 (미확정 공고 특성 반영, 대체 X)</li>
-<li>첨부 URL 빈 문자열 → 누락 처리</li>
-<li>뉴스 본문 HTML 태그 → 정규식으로 모두 제거</li>
-</ul>
-<h3>2) 데이터 타입 변환</h3>
-<ul>
-<li><code>bidNtceDt</code>, <code>pubDate</code> → datetime</li>
-<li><code>presmptPrce</code>, <code>bssamt</code> → numeric (쉼표 제거 후 변환)</li>
-</ul>
-<h3>3) 데이터 정제</h3>
-<ul>
-<li>중복 제거 (<code>bidNtceNo</code> + <code>bidNtceOrd</code> 기준)</li>
-<li>파생 변수 생성 (<code>year</code>, <code>year_month</code>)</li>
-<li>산업 태그 (보험 / 금융 / IT / 기타)</li>
-<li>컨설팅 유형 태그 (ISP / PI / POC / BPR / PMO / 구축 / 기타)</li>
-<li>첨부 PDF → <code>pdfplumber</code>, HWP → <code>hwp5txt</code> 로 본문 추출</li>
-<li>형태소 분석 <code>kiwipiepy</code> 명사 추출 (길이 ≥ 2)</li>
-</ul>
-<h3>4) 전처리 전후 비교</h3>
-<ul>
-<li>원본 458,421건 → 중복 제거 후 <strong>420,104건</strong></li>
-<li>스키마 66컬럼 혼재 → 핵심 17 + 파생 5 → <strong>22컬럼</strong></li>
-<li>분류 없음 → <code>industry × consulting_type</code> 태그 완료</li>
+<li><strong>기본 키</strong>: <code>bidNtceNo</code> (공고 단위, N:N join 대비 중복 제거 우선 적용)</li>
+<li><strong>보조 키</strong>: 날짜(<code>year_month</code>), 키워드, 기관명</li>
+<li><strong>결합 패턴</strong>: 나라장터 메타 ⟵ 첨부 본문 ⟵ 뉴스(키워드 매칭) ⟵ 규제(시계열)</li>
 </ul>
 <hr />
-<h2>탐색적 데이터 분석 (EDA)</h2>
-<h3>데이터 개요</h3>
+<h2>수집 KPI</h2>
+<p><img alt="kpi infographic" src="figures/13_kpi_infographic.png" /></p>
+<h3>실측 수치 요약</h3>
 <ul>
-<li>총 공고 수: <strong>420,104건</strong> · 수요기관 <strong>16,551곳</strong></li>
-<li>기간: 2023-01-01 ~ 2025-11-25 (27개월)</li>
-<li>추정가격 평균 40.7억 vs 중앙값 7,157만 → <strong>극단치 분포</strong></li>
-<li>상위 수요기관: 서울특별시(3,097) &gt; 한국어촌어항공단 &gt; 국토교통부</li>
-</ul>
-<h3>분포 분석</h3>
-<ul>
-<li>공고 건수 연도별 고르게 분포, 월별로 연말·분기말 피크</li>
-<li>추정가격 → 로그 스케일 시 정규 분포 근접</li>
-<li>산업별 비율: <strong>기타 88.5%</strong> · IT 9.0% · 보험 2.0% · 금융 0.4%
-  → "기타" 비중이 큼 (산업 태그 룰 보강 필요)</li>
-</ul>
-<h3>산업 × 컨설팅 유형 교차</h3>
-<ul>
-<li>구축 23,236 · PMO 4,510 · POC 1,515 · ISP 448 · PI 478 · BPR 21</li>
-<li>IT 업종은 <strong>구축 중심</strong>, PMO 수요는 서울시·국토교통부가 견인</li>
+<li>나라장터 메타: <strong>420,104건</strong> · 수요기관 <strong>16,551곳</strong></li>
+<li>첨부 파일 샘플: 197 → PDF 본문 173 (추출 성공률 <strong>87.8%</strong>)</li>
+<li>뉴스: 15,000 수집 → 중복 제거 후 <strong>13,765건</strong> (정제율 91.8%)</li>
+<li>규제 공시 (FSC RSS): 30건 (보도·공지·행정예고)</li>
 </ul>
 <hr />
-<h2>탐색적 데이터 분석 (EDA)</h2>
-<h3>공고명 주요 키워드 Top 10</h3>
+<h2>AWS 데이터허브 아키텍처</h2>
+<p><img alt="aws architecture" src="figures/11_aws_architecture.png" /></p>
+<h3>현재 운영 리소스</h3>
 <ul>
-<li>운영 (28,039) · 실시설계용역 (14,483) · 구축 (11,618)</li>
-<li>유지관리 (9,548) · 개발 (9,598) · 유지보수 (7,691)
-→ 제안서 자동화에서 <strong>높은 빈도 키워드 = Pain Point 후보군</strong></li>
+<li><strong>계정</strong> 257925264162 · 리전 ap-southeast-2 (시드니)</li>
+<li><strong>EC2</strong> t3.micro <code>datamining_demo</code> (running · 13.239.237.95)</li>
+<li><strong>S3</strong> <code>datamining-257925264162-raw</code> (버저닝 · 퍼블릭 차단)</li>
+<li><strong>IAM</strong> 사용자 <code>hwangdonguk</code> (Access Key · S3FullAccess)</li>
+<li><strong>Security Group</strong> <code>sg-0b7c854caa4d4e287</code> (SSH 22 · Streamlit 8501)</li>
 </ul>
-<h3>첨부 본문(PDF) 주요 키워드</h3>
+<hr />
+<h2>EDA ① 산업별 분포</h2>
+<p><img alt="industry pie" src="figures/03_industry_pie.png" /></p>
+<h3>해석</h3>
+<ul>
+<li><strong>기타</strong> 88.5% · IT 9.0% · 보험 2.0% · 금융 0.4%</li>
+<li>"기타" 비중이 큼 → <strong>도메인 키워드 사전 확충 필요</strong> (W09 과제)</li>
+<li>금융/보험 업종은 소수이지만 <strong>평균 예산이 IT 대비 ~2배</strong></li>
+</ul>
+<hr />
+<h2>EDA ② 연도별 추이</h2>
+<p><img alt="count by year" src="figures/01_count_by_year.png" /></p>
+<h3>해석</h3>
+<ul>
+<li>2023/2024/2025 연도별 발주 건수 고르게 분포</li>
+<li>2025년은 11월 25일까지 수집 기준</li>
+<li>연말 분기(11~12월) 피크 경향 관찰 → 계절성 존재</li>
+</ul>
+<hr />
+<h2>EDA ③ 월별 시계열</h2>
+<p><img alt="count by month" src="figures/02_count_by_month.png" /></p>
+<h3>관찰</h3>
+<ul>
+<li><strong>분기 말</strong> 집중 발주 패턴 (3·6·9·12월)</li>
+<li>공공 예산 회계연도 사이클 반영</li>
+<li>시차 분석 시 <strong>규제 공시 → 발주 lag</strong> 검증 가능</li>
+</ul>
+<hr />
+<h2>EDA ④ 산업 × 컨설팅 유형 교차</h2>
+<p><img alt="industry consulting heatmap" src="figures/04_industry_consulting_heatmap.png" /></p>
+<h3>수치 해석</h3>
+<ul>
+<li><strong>구축</strong> 23,236 · PMO 4,510 · POC 1,515 · ISP 448 · PI 478 · BPR 21</li>
+<li>IT 업종 = <strong>구축 중심</strong></li>
+<li>PMO 수요는 서울시·국토교통부가 견인</li>
+<li>ISP/PI 비중은 전체의 <strong>0.25%</strong> — 사전 전략형 발주 자체가 희소</li>
+</ul>
+<hr />
+<h2>EDA ⑤ 수요기관 Top 20</h2>
+<p><img alt="top institutions" src="figures/06_top_institutions.png" /></p>
+<h3>수치</h3>
+<ul>
+<li>서울특별시 <strong>3,097건</strong> (1위)</li>
+<li>한국어촌어항공단 1,697 · 국토교통부 1,657</li>
+<li><strong>상위 20 기관이 전체의 약 6%</strong> 차지</li>
+<li>장기적으로 <strong>"단골 발주처"</strong> 중심 타깃 설계 가능</li>
+</ul>
+<hr />
+<h2>EDA ⑥ 공고명 키워드 Top 30</h2>
+<p><img alt="title keywords" src="figures/07_title_keywords.png" /></p>
+<h3>해석</h3>
+<ul>
+<li>상위 3: <strong>운영(28,039) · 실시설계용역(14,483) · 구축(11,618)</strong></li>
+<li>관리형(유지관리·유지보수) vs 구축형 키워드 <strong>1:1 비중</strong></li>
+<li>높은 빈도 키워드 = <strong>Pain Point 후보군</strong></li>
+</ul>
+<hr />
+<h2>EDA ⑦ 본문 키워드 (PDF 첨부 173건)</h2>
+<p><img alt="body keywords" src="figures/08_body_keywords.png" /></p>
+<h3>관찰</h3>
 <ul>
 <li>계약·입찰·이행·수급인·감리 등 <strong>계약 관리 용어</strong> 우세</li>
-<li>향후 Requirement 섹션만 추출하면 기술 Pain Point 키워드로 치환 가능</li>
+<li>향후 Requirement 섹션만 추출 시 → <strong>기술 Pain Point 키워드</strong>로 치환 가능</li>
+<li>TF-IDF + sklearn LDA 8~12 토픽 (W10 계획)</li>
 </ul>
-<h3>뉴스 × 공고 시계열 관계 (탐색)</h3>
+<hr />
+<h2>예산 분포</h2>
+<p><img alt="price hist" src="figures/05_price_hist.png" /></p>
+<h3>수치 해석</h3>
+<pre><code>  평균 약 40.7억원  &gt;&gt;  중앙값 약 7,157만원
+       ↑
+       소수 초대형 공고가 평균을 왜곡
+</code></pre>
 <ul>
-<li>뉴스 발행량 증가 키워드(ISP·BPR·PMO) ↔ 나라장터 발주 피크 시점 비교 예정</li>
+<li>분포 <strong>극단적 우편향</strong> (log-skew)</li>
+<li>회귀 분석 시 <strong><code>log1p(presmptPrce)</code></strong> 변환 권장</li>
+<li>IQR 기반 이상치 제거 후 모델링 (W10)</li>
 </ul>
 <hr />
 <h2>중간 인사이트</h2>
 <h3>발견된 패턴</h3>
 <ul>
-<li>공고 <strong>88% 이상이 "기타" 산업 태그</strong> → 도메인 키워드 사전 확충 필요</li>
-<li>컨설팅 유형 태그 중 <strong>구축(23K)</strong> 이 압도적, ISP/PI 등 사전형은 소수</li>
-<li>수요기관 상위 20개가 전체 공고의 약 <strong>6%</strong> 점유</li>
-<li>추정가격 분포가 로그 스케일에서 정규 근접 → 회귀 전처리 시 <code>log1p</code> 적용 타당</li>
-<li>네이버 뉴스 키워드 중 <strong>"ISP 발주"</strong> 에서 실제 ISP 용역 공고 직접 언급 확인</li>
+<li>공고 <strong>88% 이상</strong> "기타" 산업 태그 → <strong>도메인 키워드 사전 확충 필요</strong></li>
+<li>컨설팅 유형 중 <strong>구축(23K)</strong> 압도적 · ISP/PI 등 사전형 희소</li>
+<li>상위 20 수요기관이 전체 <strong>6% 점유</strong></li>
+<li>예산 분포가 <strong>log-space 에서 정규 근접</strong> → 회귀 전처리에 <code>log1p</code></li>
+<li>뉴스 "ISP 발주" 키워드에서 <strong>실제 ISP 용역 공고 직접 언급</strong> 확인</li>
 </ul>
 <h3>가설</h3>
 <ul>
-<li><strong>H1</strong>. 2023→2025 기간 동안 "AI/데이터/클라우드" 키워드 공고 비중이 증가한다</li>
-<li><strong>H2</strong>. 금융·보험 업종은 "ISP → 구축" 순으로 시간차를 두고 발주가 이어진다</li>
-<li><strong>H3</strong>. 공고명에 "혁신·재설계·고도화" 키워드 포함 시 평균 예산이 유의하게 크다</li>
-<li><strong>H4</strong>. 규제 공시(FSC RSS) 발생 후 N개월 내 관련 발주 건수가 증가한다</li>
+<li><strong>H1</strong> 2023→2025 기간 "AI/데이터/클라우드" 공고 비중 증가</li>
+<li><strong>H2</strong> 금융·보험 업종은 "ISP → 구축" 순으로 시차 있는 연쇄 발주</li>
+<li><strong>H3</strong> "혁신·재설계·고도화" 키워드 포함 공고의 평균 예산이 유의하게 크다</li>
+<li><strong>H4</strong> 규제 공시(FSC RSS) 발생 후 N개월 내 관련 발주 증가</li>
 </ul>
 <hr />
-<h2>향후 계획</h2>
-<h3>데이터 추가 수집</h3>
+<h2>향후 계획 (Gantt 요약)</h2>
+<h3>주차별 로드맵</h3>
+<pre><code>W09 │■■■■■■■■│  첨부 전수 다운·본문 추출, 금감원(FSS) RSS 추가
+W10 │    ■■■■■■■■│  TF-IDF + sklearn LDA 8~12 토픽 모델링
+W11 │        ■■■■■■■■│  규제 → 발주 시차 분석 (Granger, 교차상관)
+W12 │            ■■■■■■■■│  Win Strategy 추출기 + Streamlit 고도화
+W13 │                ■■■■■■│  EC2 Streamlit 배포 + 도메인·HTTPS
+W14 │                    ■■■■│  최종 발표 · 라이브 시연
+</code></pre>
+<h3>AWS 인프라 자동화</h3>
 <ul>
-<li>3년치 나머지 9개월 + 2026년 1분기 확장</li>
-<li>금감원(FSS) RSS 추가, 공공데이터포털 "규제 정보" 보조 소스</li>
-</ul>
-<h3>모델 고도화</h3>
-<ul>
-<li>TF-IDF + sklearn LDA 8~12 토픽 모델링</li>
-<li>규제 → 발주 시차 분석 (Granger 검정 또는 교차상관)</li>
-<li>Win Strategy 룰 기반 추출기 (키워드 패턴 + 예산 구간)</li>
-</ul>
-<h3>시각화</h3>
-<ul>
-<li><strong>Streamlit</strong> 대시보드: 개요 · 월별 추이 · 키워드 · 공고 검색 (구현 완료)</li>
-<li>EC2 <code>datamining_demo</code> 에 배포 → 외부 공개 URL</li>
-</ul>
-<h3>AWS 인프라 운영</h3>
-<ul>
-<li>EventBridge + Lambda 로 <strong>일일 자동 수집</strong> 파이프라인 구축</li>
+<li>EventBridge + Lambda 로 <strong>일일 자동 수집</strong></li>
 <li>SageMaker Studio 에서 GPU 기반 토픽 모델링 실험</li>
+<li>CloudWatch 알람 · Budgets $5/월 유지</li>
 </ul>
 <hr />
 <h2>감사합니다</h2>
-<p><strong>GitHub</strong>: https://github.com/hwangdongwuk/DataMining</p><div class="footer">데이터마이닝 중간보고 · 황동욱 2024720459</div></body></html>
+<h3>리소스</h3>
+<ul>
+<li><strong>GitHub</strong>: https://github.com/hwangdongwuk/DataMining</li>
+<li><strong>Streamlit</strong> (로컬/EC2 포트 8501): 실시간 분석 대시보드</li>
+<li><strong>S3</strong>: <code>s3://datamining-257925264162-raw</code></li>
+</ul>
+<h3>문의</h3>
+<p>황동욱 (2024720459) · 빅데이터학과</p><div class="footer">데이터마이닝 중간보고 · 황동욱 2024720459</div></body></html>
