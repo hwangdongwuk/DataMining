@@ -1,4 +1,9 @@
-"""나라장터 입찰공고정보서비스 OpenAPI 수집기 (월별 분할 + 필터).
+"""나라장터 입찰공고정보서비스 OpenAPI 수집기 (월별 분할 + IT 색인 필터).
+
+업무구분별 공고명(bidNtceNm) 기준으로 IT 프로젝트성 공고만 색인 수집한다.
+    - 물품: 공고명에 "시스템" 포함 건만 (단순 물품 제외)
+    - 용역: 시스템·개발·IT 등 대표 키워드 포함 건만
+    - 공사·외자: 수집 제외
 
 사용법:
     # 3년치 월별 분할 수집
@@ -33,9 +38,21 @@ BASE_URL = "https://apis.data.go.kr/1230000/ad/BidPublicInfoService"
 ENDPOINT_BY_KIND = {
     "용역": "/getBidPblancListInfoServc",
     "물품": "/getBidPblancListInfoThng",
-    "공사": "/getBidPblancListInfoCnstwk",
-    "외자": "/getBidPblancListInfoFrgcpt",
 }
+
+NAME_FIELD = "bidNtceNm"  # 입찰공고명
+
+# 업무구분별 IT 프로젝트 색인 키워드 (공고명 부분일치, 대소문자 무시)
+IT_KEYWORDS_BY_KIND = {
+    "물품": ["시스템"],
+    "용역": ["시스템", "개발", "IT", "정보화", "소프트웨어", "SW",
+             "플랫폼", "데이터", "AI", "인공지능"],
+}
+
+
+def matched_keywords(name: str, kind: str) -> list[str]:
+    upper = name.upper()
+    return [kw for kw in IT_KEYWORDS_BY_KIND.get(kind, []) if kw.upper() in upper]
 
 
 def fetch_page(service_key: str, endpoint: str, start: str, end: str,
@@ -92,7 +109,8 @@ def month_ranges(start: str, end: str) -> list[tuple[str, str]]:
 
 
 def collect_range(service_key: str, kind: str, start: str, end: str,
-                  num_rows: int, out_dir: Path, sleep_sec: float = 0.2) -> tuple[Path, int]:
+                  num_rows: int, out_dir: Path,
+                  sleep_sec: float = 0.2) -> tuple[Path, int, int]:
     endpoint = ENDPOINT_BY_KIND[kind]
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -102,22 +120,30 @@ def collect_range(service_key: str, kind: str, start: str, end: str,
     items, total = extract_items(first)
     if total == 0:
         out_path.write_text("", encoding="utf-8")
-        return out_path, 0
+        return out_path, 0, 0
 
     total_pages = (total + num_rows - 1) // num_rows
     written = 0
+    fetched = 0
     with out_path.open("w", encoding="utf-8") as f:
-        for it in items:
-            f.write(json.dumps(it, ensure_ascii=False) + "\n")
-            written += 1
+        def dump(page_items: list[dict]) -> None:
+            nonlocal written, fetched
+            for it in page_items:
+                fetched += 1
+                kws = matched_keywords(str(it.get(NAME_FIELD, "") or ""), kind)
+                if not kws:
+                    continue
+                it["itMatchKeywords"] = kws
+                f.write(json.dumps(it, ensure_ascii=False) + "\n")
+                written += 1
+
+        dump(items)
         for page in range(2, total_pages + 1):
             time.sleep(sleep_sec)
             payload = fetch_page(service_key, endpoint, start, end, page, num_rows)
             page_items, _ = extract_items(payload)
-            for it in page_items:
-                f.write(json.dumps(it, ensure_ascii=False) + "\n")
-                written += 1
-    return out_path, written
+            dump(page_items)
+    return out_path, written, fetched
 
 
 def parse_args() -> argparse.Namespace:
@@ -146,21 +172,26 @@ def main() -> int:
     if args.split == "monthly":
         ranges = month_ranges(args.start, args.end)
         total_written = 0
-        print(f"[INFO] 월별 분할 수집: {len(ranges)}개월 ({args.start}~{args.end})")
+        total_fetched = 0
+        print(f"[INFO] 월별 분할 수집: {len(ranges)}개월 ({args.start}~{args.end}) "
+              f"| 업무구분={args.kind} 색인키워드={IT_KEYWORDS_BY_KIND.get(args.kind)}")
         for s, e in tqdm(ranges, desc="months"):
             try:
-                path, n = collect_range(key, args.kind, s, e, args.rows,
-                                        out_dir, sleep_sec=args.sleep)
+                path, n, fetched = collect_range(key, args.kind, s, e, args.rows,
+                                                 out_dir, sleep_sec=args.sleep)
                 total_written += n
-                tqdm.write(f"  {s}~{e}: {n}건 → {path.name}")
+                total_fetched += fetched
+                tqdm.write(f"  {s}~{e}: 색인 {n}/{fetched}건 → {path.name}")
             except Exception as exc:
                 tqdm.write(f"  [ERR] {s}~{e}: {exc}")
             time.sleep(args.sleep)
-        print(f"[DONE] 총 {total_written}건 저장")
+        kept = (total_written / total_fetched * 100) if total_fetched else 0
+        print(f"[DONE] 색인 {total_written}/{total_fetched}건 저장 ({kept:.1f}%)")
     else:
-        path, n = collect_range(key, args.kind, args.start, args.end, args.rows,
-                                out_dir, sleep_sec=args.sleep)
-        print(f"[DONE] {n}건 저장 → {path}")
+        path, n, fetched = collect_range(key, args.kind, args.start, args.end,
+                                         args.rows, out_dir, sleep_sec=args.sleep)
+        kept = (n / fetched * 100) if fetched else 0
+        print(f"[DONE] 색인 {n}/{fetched}건 저장 ({kept:.1f}%) → {path}")
     return 0
 
 
