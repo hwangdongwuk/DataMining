@@ -30,6 +30,39 @@ INDUSTRY = {
            "핀테크", "FDS"],
 }
 
+# RFP와 동일한 분류축 (cross-source 연계용)
+IT_INDEX_KEYWORDS = ["시스템", "개발", "IT", "정보화", "소프트웨어", "SW",
+                     "플랫폼", "데이터", "AI", "인공지능"]
+AI_KEYWORDS = [
+    "AI", "AX", "인공지능", "파운데이션", "생성형", "생성AI", "LLM", "초거대",
+    "학습데이터", "딥러닝", "머신러닝", "자연어", "GPT", "언어모델", "sLM",
+    "AI안전", "AI보안", "NPU", "에이전트", "Agent", "피지컬", "휴머노이드",
+    "로봇", "GPU", "온디바이스", "빅데이터", "데이터", "클라우드",
+]
+NON_AI_REASONS = [
+    ("융자/펀드/출자", ["융자", "펀드", "출자", "모태조합", "보증"]),
+    ("일반 교육/훈련", ["내일배움", "직업훈련", "장학", "대학육성", "등록금", "급식"]),
+    ("시설/건축/토목", ["건축", "청사", "이전", "시설비", "임차", "리모델링", "증축", "건립"]),
+    ("일반 복지/지원금", ["수당", "보조금", "바우처", "급여", "연금", "보험료", "의료비"]),
+    ("일반 행정/운영", ["운영비", "인건비", "경상운영", "기본경비", "여비", "업무추진"]),
+]
+
+
+def is_it_indexed(text: str) -> bool:
+    t = (text or "").upper()
+    return any(kw.upper() in t for kw in IT_INDEX_KEYWORDS)
+
+
+def tag_ai_class(text: str) -> tuple[str, str]:
+    t = (text or "").upper()
+    for kw in AI_KEYWORDS:
+        if kw.upper() in t:
+            return "ai-pure", ""
+    for reason, kws in NON_AI_REASONS:
+        if any(kw.upper() in t for kw in kws):
+            return "non-ai", reason
+    return "non-ai", "AI 키워드 미검출"
+
 
 def clean_html(s: str) -> str:
     s = re.sub(r"<[^>]+>", "", s or "")
@@ -72,6 +105,10 @@ def main() -> int:
     full_text = df["title_clean"] + " " + df["desc_clean"]
     df["industry"] = full_text.apply(lambda t: tag(t, INDUSTRY))
     df["consulting_type"] = full_text.apply(lambda t: tag(t, CONSULTING_TYPES))
+    df["it_indexed"] = full_text.apply(is_it_indexed)
+    ai = full_text.apply(tag_ai_class)
+    df["ai_class"] = ai.apply(lambda x: x[0])
+    df["non_ai_reason"] = ai.apply(lambda x: x[1])
 
     df = df.drop_duplicates(subset=["title_clean", "link"])
 
@@ -79,7 +116,8 @@ def main() -> int:
     meta_path = OUT_DIR / "news_meta.csv"
     cols = ["_query", "title_clean", "desc_clean", "link", "originallink",
             "pubdate_dt", "pubdate_date", "pubdate_ym",
-            "industry", "consulting_type"]
+            "industry", "consulting_type", "it_indexed", "ai_class",
+            "non_ai_reason"]
     df[cols].to_csv(meta_path, index=False, encoding="utf-8-sig")
     print(f"[1/2] {len(df):,}건 → {meta_path}")
 
