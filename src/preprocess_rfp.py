@@ -38,6 +38,34 @@ CONSULTING_TYPES = {
     "구축": ["구축", "개발", "시스템 구축", "시스템구축"],
 }
 
+# AI 순수성 분류 — KAIB2026(ETRI·국가AI전략위 기반) 방법론 참조
+# https://hollobit.github.io/KAIB2026  (policy: ai-pure vs non-ai)
+AI_KEYWORDS = [
+    "AI", "AX", "인공지능", "파운데이션", "생성형", "생성AI", "LLM", "초거대",
+    "학습데이터", "딥러닝", "머신러닝", "자연어", "GPT", "언어모델", "sLM",
+    "AI안전", "AI보안", "NPU", "에이전트", "Agent", "피지컬", "휴머노이드",
+    "로봇", "GPU", "온디바이스", "빅데이터", "데이터", "클라우드",
+]
+
+NON_AI_REASONS = [
+    ("융자/펀드/출자", ["융자", "펀드", "출자", "모태조합", "보증"]),
+    ("일반 교육/훈련", ["내일배움", "직업훈련", "장학", "대학육성", "등록금", "급식"]),
+    ("시설/건축/토목", ["건축", "청사", "이전", "시설비", "임차", "리모델링", "증축", "건립"]),
+    ("일반 복지/지원금", ["수당", "보조금", "바우처", "급여", "연금", "보험료", "의료비"]),
+    ("일반 행정/운영", ["운영비", "인건비", "경상운영", "기본경비", "여비", "업무추진"]),
+]
+
+
+def tag_ai_class(title: str) -> tuple[str, str]:
+    t = (title or "").upper()
+    for kw in AI_KEYWORDS:
+        if kw.upper() in t:
+            return "ai-pure", ""
+    for reason, kws in NON_AI_REASONS:
+        if any(kw.upper() in t for kw in kws):
+            return "non-ai", reason
+    return "non-ai", "AI 키워드 미검출"
+
 META_COLUMNS = [
     "bidNtceNo", "bidNtceOrd", "bidNtceNm", "bidNtceDt",
     "ntceInsttNm", "dminsttNm", "bidMethdNm", "cntrctCnclsMthdNm",
@@ -90,6 +118,9 @@ def load_meta(in_dir: Path) -> pd.DataFrame:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     df["industry"] = df["bidNtceNm"].apply(tag_industry)
     df["consulting_type"] = df["bidNtceNm"].apply(tag_consulting)
+    ai = df["bidNtceNm"].apply(tag_ai_class)
+    df["ai_class"] = ai.apply(lambda x: x[0])
+    df["non_ai_reason"] = ai.apply(lambda x: x[1])
     return df
 
 
@@ -103,17 +134,23 @@ def extract_pdf(path: Path) -> str:
         return f"[PDF_ERR] {e}"
 
 
+import shutil
+_HWP5TXT = shutil.which("hwp5txt") or str(
+    Path(__file__).resolve().parent.parent / ".venv/bin/hwp5txt")
+
+
 def extract_hwp(path: Path) -> str:
+    if not Path(_HWP5TXT).exists():
+        return f"[HWP_ERR] hwp5txt binary not found at {_HWP5TXT}"
     try:
         r = subprocess.run(
-            ["hwp5txt", str(path)],
+            [_HWP5TXT, str(path)],
             capture_output=True, timeout=60,
         )
         if r.returncode == 0:
             return r.stdout.decode("utf-8", errors="ignore")
-        return f"[HWP_ERR] {r.stderr.decode('utf-8', errors='ignore')[:200]}"
-    except FileNotFoundError:
-        return "[HWP_ERR] hwp5txt not installed"
+        err = r.stderr.decode("utf-8", errors="ignore")[:200]
+        return f"[HWP_ERR] {err}"
     except Exception as e:
         return f"[HWP_ERR] {e}"
 
