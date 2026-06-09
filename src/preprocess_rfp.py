@@ -116,6 +116,8 @@ def load_meta(in_dir: Path) -> pd.DataFrame:
     df["year_month"] = df["bidNtceDt_dt"].dt.to_period("M").astype(str)
     for col in ["presmptPrce", "bssamt"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
+        # 반복숫자 sentinel(10조 초과) 이상치 제거
+        df.loc[df[col] > 1e13, col] = pd.NA
     df["industry"] = df["bidNtceNm"].apply(tag_industry)
     df["consulting_type"] = df["bidNtceNm"].apply(tag_consulting)
     ai = df["bidNtceNm"].apply(tag_ai_class)
