@@ -17,6 +17,27 @@ TEXT_PATH = DATA_DIR / "rfp_text.csv"
 TOKENS_PATH = DATA_DIR / "rfp_tokens.csv"
 NEWS_PATH = DATA_DIR / "news_meta.csv"
 
+# ── 색인/정제에 사용한 키워드 (파이프라인과 동기화) ──
+IT_INDEX_KEYWORDS = [
+    "시스템", "정보시스템", "소프트웨어", "SW", "S/W", "플랫폼", "빅데이터",
+    "데이터베이스", "DB구축", "데이터", "AI", "인공지능", "클라우드", "ICT",
+    "정보화", "전산", "정보통신", "홈페이지", "웹사이트", "애플리케이션",
+    "어플리케이션", "모바일앱", "챗봇", "사물인터넷", "IoT", "지능형",
+    "스마트시티", "시스템개발", "SW개발", "소프트웨어개발", "웹개발", "앱개발",
+    "응용개발", "프로그램개발", "플랫폼개발", "모바일개발", "홈페이지개발",
+    "웹사이트개발", "고도화", "IT",
+]
+EXCLUDED_DEV_KEYWORDS = ["콘텐츠개발", "캐릭터개발", "교육과정개발", "역량개발",
+                         "경력개발", "신약개발", "관광·단지개발", "디자인개발"]
+AI_PURE_KEYWORDS = [
+    "AI", "AX", "인공지능", "생성형", "생성AI", "LLM", "초거대", "딥러닝",
+    "머신러닝", "자연어", "GPT", "언어모델", "AI안전", "AI보안", "에이전트",
+    "Agent", "휴머노이드", "로봇", "GPU", "온디바이스", "빅데이터", "데이터",
+    "클라우드",
+]
+STOPWORDS = {"용역", "사업", "구매", "재공고", "공고", "입찰", "년도", "관련",
+             "위한", "대한", "기타", "외", "및", "년", "차", "제"}
+
 
 @st.cache_data
 def load_meta() -> pd.DataFrame:
@@ -96,20 +117,33 @@ def page_timeline(df: pd.DataFrame) -> None:
 
 
 def page_keywords(df: pd.DataFrame, df_tok: pd.DataFrame) -> None:
-    st.subheader("③ 산업별 Pain Point 키워드")
-    if df_tok.empty:
-        st.warning("토큰 데이터가 아직 생성되지 않았습니다. 전처리를 먼저 실행하세요.")
+    st.subheader("③ 색인 기준 & 공고명 키워드")
+
+    with st.expander("📌 데이터 수집·정제에 사용한 키워드 (클릭)", expanded=True):
+        st.markdown("**① 수집(색인) 키워드 — 업무구분 '용역' 중 아래 IT 맥락 "
+                    "키워드가 공고명에 포함된 건만 수집** *(공사·외자 제외)*")
+        st.code(" · ".join(IT_INDEX_KEYWORDS), language=None)
+        st.markdown("**② 제외(정제) — 단독 '개발'은 다의어라 제외**, 아래처럼 "
+                    "IT 비연관 '개발' 건을 배제:")
+        st.code(" · ".join(EXCLUDED_DEV_KEYWORDS), language=None)
+        st.markdown("**③ AI 순수성(ai-pure) 판정 키워드** *(KAIB2026/ETRI 기준)*")
+        st.code(" · ".join(AI_PURE_KEYWORDS), language=None)
+
+    st.markdown("**공고명 상위 키워드 (필터 적용 결과 기준)**")
+    if df.empty:
+        st.info("데이터 없음")
         return
-    merged = df_tok.merge(df[["bidNtceNo", "industry", "consulting_type"]],
-                          on="bidNtceNo", how="inner")
-    industry = st.selectbox("산업 선택",
-                             sorted(merged["industry"].dropna().unique()))
-    sub = merged[merged["industry"] == industry]
-    if sub.empty:
-        st.info("해당 산업 데이터 없음")
+    import re as _re
+    tokens: list[str] = []
+    for nm in df["bidNtceNm"].dropna().astype(str):
+        for tok in _re.split(r"[\s\(\)\[\]·,/]+", nm):
+            tok = tok.strip()
+            if len(tok) >= 2 and tok not in STOPWORDS and not tok.isdigit():
+                tokens.append(tok)
+    if not tokens:
+        st.info("키워드 없음")
         return
-    all_nouns = " ".join(sub["nouns"].fillna("").tolist()).split()
-    freq = pd.Series(all_nouns).value_counts().head(30)
+    freq = pd.Series(tokens).value_counts().head(30)
     st.bar_chart(freq)
 
 

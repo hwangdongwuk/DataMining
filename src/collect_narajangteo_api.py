@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from datetime import date, datetime
@@ -43,16 +44,33 @@ ENDPOINT_BY_KIND = {
 NAME_FIELD = "bidNtceNm"  # 입찰공고명
 
 # 업무구분별 IT 프로젝트 색인 키워드 (공고명 부분일치, 대소문자 무시)
+# "개발"은 다의어(콘텐츠/교육/신약/도시개발 등)라 단독 제외 → IT 맥락 복합어만 포함
 IT_KEYWORDS_BY_KIND = {
     "물품": ["시스템"],
-    "용역": ["시스템", "개발", "IT", "정보화", "소프트웨어", "SW",
-             "플랫폼", "데이터", "AI", "인공지능"],
+    "용역": [
+        # 강한 IT 신호
+        "시스템", "정보시스템", "소프트웨어", "SW", "S/W", "플랫폼",
+        "빅데이터", "데이터베이스", "DB구축", "데이터", "AI", "인공지능",
+        "클라우드", "ICT", "정보화", "전산", "정보통신", "홈페이지",
+        "웹사이트", "애플리케이션", "어플리케이션", "모바일앱", "챗봇",
+        "사물인터넷", "IoT", "지능형", "스마트시티",
+        # IT 맥락 '개발' 복합어
+        "시스템개발", "SW개발", "소프트웨어개발", "웹개발", "앱개발",
+        "응용개발", "프로그램개발", "플랫폼개발", "모바일개발",
+        "홈페이지개발", "웹사이트개발", "고도화",
+    ],
 }
+
+# 단독 영문 IT 토큰 (부분일치 오탐 방지용 별도 처리)
+_IT_TOKEN_RE = re.compile(r"\bIT\b", re.IGNORECASE)
 
 
 def matched_keywords(name: str, kind: str) -> list[str]:
     upper = name.upper()
-    return [kw for kw in IT_KEYWORDS_BY_KIND.get(kind, []) if kw.upper() in upper]
+    hits = [kw for kw in IT_KEYWORDS_BY_KIND.get(kind, []) if kw.upper() in upper]
+    if kind == "용역" and _IT_TOKEN_RE.search(name or ""):
+        hits.append("IT")
+    return hits
 
 
 def fetch_page(service_key: str, endpoint: str, start: str, end: str,
