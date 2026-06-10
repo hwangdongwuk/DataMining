@@ -51,7 +51,7 @@ IT_KEYWORDS_BY_KIND = {
         # 강한 IT 신호
         "시스템", "정보시스템", "소프트웨어", "SW", "S/W", "플랫폼",
         "빅데이터", "데이터베이스", "DB구축", "데이터", "AI", "인공지능",
-        "클라우드", "ICT", "정보화", "전산", "정보통신", "홈페이지",
+        "클라우드", "ICT", "IT", "정보화", "전산", "정보통신", "홈페이지",
         "웹사이트", "애플리케이션", "어플리케이션", "모바일앱", "챗봇",
         "사물인터넷", "IoT", "지능형", "스마트시티",
         # IT 맥락 '개발' 복합어
@@ -61,16 +61,53 @@ IT_KEYWORDS_BY_KIND = {
     ],
 }
 
-# 단독 영문 IT 토큰 (부분일치 오탐 방지용 별도 처리)
-_IT_TOKEN_RE = re.compile(r"\bIT\b", re.IGNORECASE)
+_BOUNDARY_CACHE: dict[str, "re.Pattern"] = {}
+
+
+def _kw_in(kw: str, name: str) -> bool:
+    """영문 토큰(AI/SW/IT 등)은 단어경계 매칭으로 오탐(air/fair/brain) 방지,
+    한글 포함 키워드는 부분일치."""
+    if kw.isascii() and kw.isalpha():
+        rx = _BOUNDARY_CACHE.get(kw)
+        if rx is None:
+            rx = re.compile(r"(?<![A-Za-z])" + re.escape(kw) + r"(?![A-Za-z])",
+                            re.IGNORECASE)
+            _BOUNDARY_CACHE[kw] = rx
+        return rx.search(name) is not None
+    return kw.upper() in name.upper()
+
+
+# IT 비연관 도메인 마커 (행사/교육/홍보/의료/운송) — 핵심 IT 시스템 앵커가
+# 없을 때만 제외 (예: "전시관리시스템 구축"은 앵커가 있어 유지)
+EXCLUDE_MARKERS = [
+    "박람회", "전시회", "EXPO", "Expo", "공모전", "해커톤", "경진대회",
+    "포럼", "컨퍼런스", "세미나", "학술제", "채용박람", "Fair", "페어",
+    "캠프", "아카데미", "연수", "체험학습", "수련활동",
+    "홍보관", "전시부스", "부스장치", "장치시공", "장치공사", "전시디자인",
+    "운송", "통관", "항공권", "공연", "음악회", "기념식", "개소식",
+    "MRI", "원격판독", "위탁검사", "외주검사", "교정기공물", "의료영상",
+    "잔류시험", "농약", "GLP", "수의시담",
+]
+SYSTEM_ANCHORS = [
+    "시스템", "정보시스템", "플랫폼", "구축", "고도화", "홈페이지", "웹사이트",
+    "포털", "소프트웨어", "데이터베이스", "DB구축", "ERP", "클라우드", "챗봇",
+    "애플리케이션", "어플리케이션", "모바일앱", "정보화", "전산화", "웹",
+]
+
+
+def is_domain_excluded(name: str) -> bool:
+    """IT 비연관 도메인(행사·교육·홍보·의료·운송)이며 핵심 IT 시스템 앵커가
+    없는 건 → 제외."""
+    if any(_kw_in(kw, name) for kw in SYSTEM_ANCHORS):
+        return False
+    return any(_kw_in(kw, name) for kw in EXCLUDE_MARKERS)
 
 
 def matched_keywords(name: str, kind: str) -> list[str]:
-    upper = name.upper()
-    hits = [kw for kw in IT_KEYWORDS_BY_KIND.get(kind, []) if kw.upper() in upper]
-    if kind == "용역" and _IT_TOKEN_RE.search(name or ""):
-        hits.append("IT")
-    return hits
+    name = name or ""
+    if kind == "용역" and is_domain_excluded(name):
+        return []
+    return [kw for kw in IT_KEYWORDS_BY_KIND.get(kind, []) if _kw_in(kw, name)]
 
 
 def fetch_page(service_key: str, endpoint: str, start: str, end: str,

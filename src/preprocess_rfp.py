@@ -60,12 +60,12 @@ NON_AI_REASONS = [
 
 
 def tag_ai_class(title: str) -> tuple[str, str]:
-    t = (title or "").upper()
-    for kw in AI_KEYWORDS:
-        if kw.upper() in t:
-            return "ai-pure", ""
+    raw = title or ""
+    nospace = raw.upper().replace(" ", "")
+    if any(_kw_in(kw, raw, nospace) for kw in AI_KEYWORDS):
+        return "ai-pure", ""
     for reason, kws in NON_AI_REASONS:
-        if any(kw.upper() in t for kw in kws):
+        if any(_kw_in(kw, raw, nospace) for kw in kws):
             return "non-ai", reason
     return "non-ai", "AI 키워드 미검출"
 
@@ -78,20 +78,37 @@ META_COLUMNS = [
 ]
 
 
+_BOUNDARY_CACHE: dict[str, "re.Pattern"] = {}
+
+
+def _kw_in(kw: str, raw: str, nospace: str) -> bool:
+    """영문 토큰(AI/IT/SW/PI/ISP 등)은 단어경계 매칭으로 오탐 방지
+    (air/fair/brain, API 속 PI 등), 한글 포함 키워드는 부분일치."""
+    if kw.isascii() and kw.isalpha():
+        rx = _BOUNDARY_CACHE.get(kw)
+        if rx is None:
+            rx = re.compile(r"(?<![A-Za-z])" + re.escape(kw) + r"(?![A-Za-z])",
+                            re.IGNORECASE)
+            _BOUNDARY_CACHE[kw] = rx
+        return rx.search(raw) is not None
+    return kw.upper().replace(" ", "") in nospace
+
+
 def tag_industry(title: str) -> str:
-    t = (title or "").replace(" ", "")
+    raw = title or ""
+    nospace = raw.upper().replace(" ", "")
     for ind, kws in INDUSTRY_KEYWORDS.items():
-        if any(kw in t for kw in kws):
+        if any(_kw_in(kw, raw, nospace) for kw in kws):
             return ind
     return "기타"
 
 
 def tag_consulting(title: str) -> str:
-    t = (title or "").upper().replace(" ", "")
+    raw = title or ""
+    nospace = raw.upper().replace(" ", "")
     for typ, kws in CONSULTING_TYPES.items():
-        for kw in kws:
-            if kw.upper().replace(" ", "") in t:
-                return typ
+        if any(_kw_in(kw, raw, nospace) for kw in kws):
+            return typ
     return "기타"
 
 
