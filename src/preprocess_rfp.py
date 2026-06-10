@@ -20,16 +20,46 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
+# 수요기관(dminsttNm) 기반 산업 분류 — 최대 10개 범주, 우선순위 순.
+# 도메인 특화 기관을 먼저 매칭하고, 일반 연구원/대학은 '교육·연구'로,
+# 미매칭은 '행정·공공'으로 귀속 → '기타' 최소화.
+INSTITUTION_SECTOR = [
+    ("금융", ["거래소", "은행", "증권", "카드", "캐피탈", "자산운용", "저축",
+              "금융", "예금보험", "신용정보", "신용보증", "기술보증", "예탁결제",
+              "조폐", "코스콤", "금융결제", "서민금융", "무역보험", "주택금융",
+              "새마을금고", "수출입"]),
+    ("보험", ["보험", "공제"]),
+    ("의료·보건", ["병원", "의료원", "질병관리", "보건", "건강보험", "심사평가",
+                  "적십자", "암센터", "치과", "한의", "의료", "혈액"]),
+    ("문화·관광·체육", ["문화", "관광", "박물관", "미술관", "도서관", "예술",
+                       "콘텐츠", "체육", "스포츠", "문화재", "방송", "영상",
+                       "공연", "국악", "문화원"]),
+    ("농림·수산·환경", ["농촌", "농업", "산림", "수산", "해양", "환경", "기상",
+                       "축산", "임업", "농어촌", "생태", "식품", "검역", "농수산"]),
+    ("국토·교통·건설", ["국토", "교통", "철도", "도로", "공항", "항만", "수자원",
+                       "토지주택", "코레일", "건설", "항공", "해운", "물류",
+                       "도시공사", "시설안전", "도시철도"]),
+    ("산업·에너지", ["전력", "한전", "가스", "석유", "에너지", "발전", "산업단지",
+                    "무역협회", "코트라", "산업기술", "중소벤처", "특허", "원자력",
+                    "광물", "전기안전", "신재생", "산업진흥", "디자인진흥",
+                    "생산기술", "세라믹", "기계연구", "화학연구", "전자부품"]),
+    ("정보·통신", ["정보화", "정보통신", "지능정보", "지역정보", "전파",
+                  "방송통신", "인터넷진흥", "정보보호", "소프트웨어진흥",
+                  "정보사회", "전산"]),
+    ("교육·연구", ["대학교", "대학", "과학기술원", "교육청", "교육지원청",
+                  "학교", "교육원", "폴리텍", "장학", "평생교육", "직업능력",
+                  "학술", "연구원", "연구소", "개발원", "진흥원", "학회",
+                  "한국학", "교육개발"]),
+    ("행정·공공", ["특별시", "광역시", "특별자치", "도청", "시청", "군청", "구청",
+                  "정부", "부", "청", "처", "위원회", "공단", "공사", "재단",
+                  "협회", "조합", "센터", "사업소", "의회", "경찰", "소방",
+                  "국방", "군", "우정", "연금", "근로복지", "공공"]),
+]
+INDUSTRY_DEFAULT = "행정·공공"
+# 제목 기반 보조 신호(기관 미상 시)
 INDUSTRY_KEYWORDS = {
-    "보험": ["보험", "생명", "손해", "공제", "재보험", "보험사"],
-    "금융": ["은행", "금융", "증권", "카드", "캐피탈", "자산운용", "저축",
-             "금감원", "예금보험", "신용정보"],
-    "IT": ["정보시스템", "소프트웨어", "SW", "S/W", "플랫폼", "클라우드", "데이터",
-           "데이터베이스", "DB구축", "AI", "인공지능", "빅데이터", "디지털",
-           "ERP", "BPR", "ISP", "PI", "POC", "PMO", "시스템", "웹", "웹사이트",
-           "홈페이지", "모바일", "앱", "애플리케이션", "어플리케이션",
-           "정보화", "전산", "정보통신", "ICT", "지능형", "고도화", "IoT",
-           "사물인터넷", "챗봇", "스마트", "관제", "전자정부"],
+    "보험": ["보험", "생명", "손해", "공제"],
+    "금융": ["은행", "금융", "증권", "카드", "거래소"],
 }
 
 CONSULTING_TYPES = {
@@ -94,13 +124,18 @@ def _kw_in(kw: str, raw: str, nospace: str) -> bool:
     return kw.upper().replace(" ", "") in nospace
 
 
-def tag_industry(title: str) -> str:
+def tag_industry(title: str, institution: str = "") -> str:
+    inst = institution or ""
+    for sector, kws in INSTITUTION_SECTOR:
+        if any(kw in inst for kw in kws):
+            return sector
+    # 기관 미상 시 제목 기반 보조 분류
     raw = title or ""
     nospace = raw.upper().replace(" ", "")
     for ind, kws in INDUSTRY_KEYWORDS.items():
         if any(_kw_in(kw, raw, nospace) for kw in kws):
             return ind
-    return "기타"
+    return INDUSTRY_DEFAULT
 
 
 def tag_consulting(title: str) -> str:
@@ -138,7 +173,15 @@ def load_meta(in_dir: Path) -> pd.DataFrame:
         df[col] = pd.to_numeric(df[col], errors="coerce")
         # 반복숫자 sentinel(10조 초과) 이상치 제거
         df.loc[df[col] > 1e13, col] = pd.NA
-    df["industry"] = df["bidNtceNm"].apply(tag_industry)
+    # 논리적 중복 제거: 같은 기관이 같은 제목·추정가로 재공고한 건 (최신 1건 유지).
+    # 서로 다른 기관의 동일 제목은 보존.
+    before = len(df)
+    df = (df.sort_values("bidNtceDt_dt")
+            .drop_duplicates(subset=["bidNtceNm", "dminsttNm", "presmptPrce"],
+                             keep="last"))
+    print(f"  중복 제거(제목+기관+추정가): {before:,} → {len(df):,}")
+    df["industry"] = df.apply(
+        lambda r: tag_industry(r["bidNtceNm"], r["dminsttNm"]), axis=1)
     df["consulting_type"] = df["bidNtceNm"].apply(tag_consulting)
     ai = df["bidNtceNm"].apply(tag_ai_class)
     df["ai_class"] = ai.apply(lambda x: x[0])
