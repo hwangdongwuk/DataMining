@@ -221,10 +221,56 @@ def page_search(df: pd.DataFrame) -> None:
     )
 
 
+def inject_style() -> None:
+    st.markdown("""
+    <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@latest/dist/web/variable/pretendardvariable.css');
+    html, body, [class*="css"], .stMarkdown, button, input, textarea, select {
+        font-family:'Pretendard Variable',Pretendard,-apple-system,sans-serif !important;
+        letter-spacing:-.2px;
+    }
+    .block-container { max-width:1380px; padding-top:1.2rem; padding-bottom:2rem; }
+    #MainMenu, footer, header [data-testid="stToolbar"] { visibility:hidden; }
+    .hero { background:linear-gradient(120deg,#0f172a 0%,#1e3a8a 55%,#0e7490 100%);
+        border-radius:20px; padding:26px 34px; color:#fff; margin-bottom:18px;
+        box-shadow:0 10px 30px rgba(30,58,138,.18); }
+    .hero h1 { font-size:30px; font-weight:800; margin:0 0 6px; letter-spacing:-1px; }
+    .hero p { margin:0; color:#cbd5e1; font-size:15px; }
+    .hero .pills { margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; }
+    .hero .pill { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18);
+        padding:5px 13px; border-radius:999px; font-size:13px; font-weight:600; color:#e0e7ff; }
+    [data-testid="stMetric"] { background:#fff; border:1px solid #e7ecf3; border-radius:14px;
+        padding:14px 16px; box-shadow:0 1px 3px rgba(15,23,42,.05); }
+    [data-testid="stMetricValue"] { color:#1d4ed8; font-weight:800; font-size:26px; }
+    [data-testid="stMetricLabel"] { color:#64748b; font-weight:600; }
+    .stTabs [data-baseweb="tab-list"] { gap:5px; border-bottom:2px solid #eef2f7; }
+    .stTabs [data-baseweb="tab"] { background:#f1f5f9; border-radius:10px 10px 0 0;
+        padding:9px 16px; font-weight:700; font-size:15px; color:#475569; }
+    .stTabs [aria-selected="true"] { background:#2563eb !important; color:#fff !important; }
+    [data-testid="stDataFrame"] { border:1px solid #e7ecf3; border-radius:12px; }
+    h3, h4 { color:#0f172a; font-weight:800; letter-spacing:-.5px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+
 def main() -> None:
-    st.set_page_config(page_title="공공 RFP Pain Point 허브", layout="wide")
-    st.title("공공 RFP × 산업 Pain Point 데이터 허브")
-    st.caption("데이터마이닝 · 황동욱 · 2024720459")
+    st.set_page_config(page_title="공공 IT 발주 × AI 인텔리전스",
+                       page_icon="📊", layout="wide")
+    inject_style()
+    st.markdown("""
+    <div class="hero">
+      <h1>📊 공공 IT 발주 인텔리전스 — 나라장터 × 정부 AI 재정계획</h1>
+      <p>나라장터 IT 발주 33,860건(2023–2025) · 정부 AI 재정사업 533건(2026) 통합 분석</p>
+      <div class="pills">
+        <span class="pill">🗓 35개월</span>
+        <span class="pill">🏛 수요기관 3,383곳</span>
+        <span class="pill">🤖 AI 발주 9.0% (엄격 정의)</span>
+        <span class="pill">💰 정부 AI 27조 · +24%</span>
+        <span class="pill">☁ AWS 라이브</span>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.caption("데이터마이닝 · 황동욱 · 2024720459 · 출처: 나라장터 OpenAPI · KAIB2026")
 
     df = load_meta()
     if df.empty:
