@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -114,7 +115,7 @@ def _by_department(k: dict) -> None:
              "2025예산(백만원)": v.get("total_2025", 0)} for d, v in a.items()]
     df = pd.DataFrame(rows).sort_values("2026예산(백만원)", ascending=False)
     df["증감률%"] = ((df["2026예산(백만원)"] - df["2025예산(백만원)"])
-                   / df["2025예산(백만원)"].replace(0, pd.NA) * 100).round(1)
+                   / df["2025예산(백만원)"].replace(0, np.nan) * 100).round(1)
     top = df.head(15)
     st.plotly_chart(
         px.bar(top, x="2026예산(백만원)", y="부처", orientation="h",
@@ -167,7 +168,7 @@ def _changes(k: dict) -> None:
             for d, v in bd.items()]
     g = pd.DataFrame(rows).sort_values("2026", ascending=False).head(15)
     g["증감률%"] = ((g["2026"] - g["2025"])
-                  / g["2025"].replace(0, pd.NA) * 100).round(1)
+                  / g["2025"].replace(0, np.nan) * 100).round(1)
     st.plotly_chart(
         px.bar(g.sort_values("증감률%"), x="증감률%", y="부처", orientation="h",
                color="증감률%", color_continuous_scale="RdYlGn"),
