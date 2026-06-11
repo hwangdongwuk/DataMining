@@ -11,6 +11,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+import kaib_pages as kp
+
 DATA_DIR = Path("data/processed")
 META_PATH = DATA_DIR / "rfp_meta.csv"
 TEXT_PATH = DATA_DIR / "rfp_text.csv"
@@ -234,17 +236,25 @@ def main() -> None:
 
     df_f = sidebar_filters(df)
 
-    tabs = st.tabs(["개요", "월별 추이", "키워드", "AI 순수성", "공고 검색"])
-    with tabs[0]:
-        page_overview(df_f)
-    with tabs[1]:
-        page_timeline(df_f)
-    with tabs[2]:
-        page_keywords(df_f, df_tok)
-    with tabs[3]:
-        page_ai(df_f, df_news)
-    with tabs[4]:
-        page_search(df_f)
+    top = st.tabs(["📋 IT 발주 분석 (나라장터)",
+                   "🏛 정부 AI 재정계획 (KAIB2026)",
+                   "⚖️ 계획 ↔ 발주 비교"])
+    with top[0]:
+        tabs = st.tabs(["개요", "월별 추이", "키워드", "AI 순수성", "공고 검색"])
+        with tabs[0]:
+            page_overview(df_f)
+        with tabs[1]:
+            page_timeline(df_f)
+        with tabs[2]:
+            page_keywords(df_f, df_tok)
+        with tabs[3]:
+            page_ai(df_f, df_news)
+        with tabs[4]:
+            page_search(df_f)
+    with top[1]:
+        kp.render_kaib()
+    with top[2]:
+        kp.render_compare(df)
 
 
 if __name__ == "__main__":
