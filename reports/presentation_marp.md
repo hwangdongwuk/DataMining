@@ -113,7 +113,7 @@ style: |
 
 > 검토의견 4차(P0): "산업 '기타' 88.5% — 분류 자체가 작동하지 않음"
 
-- **기말 = ①·② 검증 + 분류 신뢰성 확보**, ③ Win Strategy는 **실무 서비스로 구현**(p.14)
+- **기말 = ①·② 검증 + 분류 신뢰성 확보**, ③ Win Strategy는 **실무 서비스로 구현**(p.15)
 
 ---
 
@@ -150,11 +150,11 @@ style: |
 |---|---|---|
 | 교수 P0 | 산업 '기타' 88.5% | 전처리 고도화 → **0%** (p.6–7) |
 | 교수 Q3 | H3를 t-test로 검증? | **p<10⁻²⁰ 지지** (p.8) |
-| 동료 다수 | "기타 많아 교차 안 됨" | 산업×컨설팅 **카이제곱 유의** (p.10) |
-| 동료 | 우편향 심해 왜곡 | 평균·중앙 병기 + log1p (p.13) |
-| 자체 점검 | AI 비중 과대분류 | **21.7% → 9.0% 교정** (p.11) |
+| 동료 다수 | "기타 많아 교차 안 됨" | 산업×컨설팅 **카이제곱 유의** (p.11) |
+| 동료 | 우편향 심해 왜곡 | 평균·중앙 병기 + log1p (p.14) |
+| 자체 점검 | AI 비중 과대분류 | **21.7% → 9.0% 교정** (p.12) |
 
-<span class="small">※ 미해결: 첨부 PDF 전수추출·FSC 규제시차(표본 부족)는 한계로 명시(p.16)</span>
+<span class="small">※ 미해결: 첨부 PDF 전수추출·FSC 규제시차(표본 부족)는 한계로 명시(p.17)</span>
 
 ---
 
@@ -231,33 +231,54 @@ style: |
 
 ---
 
-# 8. 가설 검정 — describe를 넘어
+# 8. 가설 검정 — 무엇을, 어떻게 확인했나
 
 <div class="htest">
   <div class="ht">
-    <div class="q">H1 · 연도별 AI 발주 증가?</div>
-    <div class="r">6.1 → 8.0 → 13.4%</div>
-    <div class="p">✔ 2023→25 2.2배 증가 (지지)</div>
+    <div class="q">❶ AI 발주가 해마다 늘었나?</div>
+    <div class="r">네 — 2년 새 약 2배 ↑</div>
+    <div class="p">검증법 · 연도별 추세 비교 (6%→13%)</div>
   </div>
   <div class="ht">
-    <div class="q">H3 · '고도화' 공고 예산 ↑?</div>
-    <div class="r">1.55억 vs 1.18억</div>
-    <div class="p">✔ Welch t=9.51, p<10⁻²⁰</div>
+    <div class="q">❷ '고도화' 사업은 예산이 더 큰가?</div>
+    <div class="r">네 — 평균 1.3배 더 큼</div>
+    <div class="p">검증법 · 두 집단 평균 차이 (t-검정)</div>
   </div>
   <div class="ht">
-    <div class="q">산업 ↔ 컨설팅유형 연관?</div>
-    <div class="r">χ² = 2,824</div>
-    <div class="p">✔ p≈0 (독립 기각, 연관)</div>
+    <div class="q">❸ 산업마다 원하는 사업유형이 다른가?</div>
+    <div class="r">네 — 뚜렷하게 다름</div>
+    <div class="p">검증법 · 교차분석 (카이제곱 검정)</div>
   </div>
 </div>
 
-<span class="small">고도화 키워드 = 고도화·혁신·재설계·재구축·차세대 / log1p(presmptPrce) 기준 · 중복 242건 제거</span>
+<span class="small">세 가설 모두 <b>통계적으로 유의</b> = "우연으로 보기 어렵다" (t-검정·카이제곱으로 확인)</span>
 
-> 중간발표의 '향후 계획' 가설을 **실제 데이터로 검정 완료**
+> 중간발표 때 '계획'만 세운 가설을, 기말은 **표준 통계기법으로 검증 완료**
 
 ---
 
-# 9. Q①의 답 — 어느 산업이 AI를 발주하나
+# 9. 어느 산업이 IT를 발주하나 (전체)
+
+<div class="hbars">
+  <div class="hb"><span class="nm">행정·공공</span><div class="tk"><div class="fv" style="flex-grow:415"></div><div style="flex-grow:585"></div></div><span class="pct">41.5%</span></div>
+  <div class="hb"><span class="nm">교육·연구</span><div class="tk"><div class="fv" style="flex-grow:187"></div><div style="flex-grow:813"></div></div><span class="pct">18.7%</span></div>
+  <div class="hb"><span class="nm">농림·수산·환경</span><div class="tk"><div class="fv" style="flex-grow:93"></div><div style="flex-grow:907"></div></div><span class="pct">9.3%</span></div>
+  <div class="hb"><span class="nm">국토·교통·건설</span><div class="tk"><div class="fv" style="flex-grow:75"></div><div style="flex-grow:925"></div></div><span class="pct">7.5%</span></div>
+  <div class="hb"><span class="nm">산업·에너지</span><div class="tk"><div class="fv" style="flex-grow:55"></div><div style="flex-grow:945"></div></div><span class="pct">5.5%</span></div>
+  <div class="hb"><span class="nm">문화·관광·체육</span><div class="tk"><div class="fv" style="flex-grow:51"></div><div style="flex-grow:949"></div></div><span class="pct">5.1%</span></div>
+  <div class="hb"><span class="nm">의료·보건</span><div class="tk"><div class="fv" style="flex-grow:50"></div><div style="flex-grow:950"></div></div><span class="pct">5.0%</span></div>
+  <div class="hb"><span class="nm">정보·통신</span><div class="tk"><div class="fv" style="flex-grow:44"></div><div style="flex-grow:956"></div></div><span class="pct">4.4%</span></div>
+  <div class="hb"><span class="nm">금융</span><div class="tk"><div class="fv" style="flex-grow:21"></div><div style="flex-grow:979"></div></div><span class="pct">2.1%</span></div>
+  <div class="hb"><span class="nm">보험</span><div class="tk"><div class="fv" style="flex-grow:9"></div><div style="flex-grow:991"></div></div><span class="pct">0.9%</span></div>
+</div>
+
+<span class="small">전체 33,860건 기준 · 수요기관 성격 기반 10범주</span>
+
+> **행정·공공(41.5%) + 교육·연구(18.7%)** 가 공공 IT 발주의 60% — 발주량은 공공·교육이 주도
+
+---
+
+# 10. Q①의 답 — 그중 AI는 어느 산업이 발주하나
 
 <div class="hbars">
   <div class="hb"><span class="nm">정보·통신</span><div class="tk"><div class="fv ai" style="flex-grow:223"></div><div style="flex-grow:777"></div></div><span class="pct">22.3%</span></div>
@@ -270,11 +291,11 @@ style: |
 
 <span class="small">엄격 정의 기준 · 사업유형별: 연구개발 36.4% · POC/실증 33.8% · 컨설팅 17.3%</span>
 
-> **정보·통신·교육연구**가 AI 발주 주도 — 금융·행정은 담론 대비 발주 저조
+> 발주 <b>'량'</b>은 행정·공공이 1위였지만, AI <b>'비중'</b>은 <b>정보·통신·교육연구</b>가 주도 — 발주량 1위 행정·공공은 AI 6.9%로 하위 (양 ↔ AI 성숙도는 별개)
 
 ---
 
-# 10. Q②의 답 — 산업 × 컨설팅 유형 연결
+# 11. Q②의 답 — 산업 × 컨설팅 유형 연결
 
 | 산업 \ 유형 | 유지보수 | 구축 | 고도화 | 컨설팅 |
 |---|---|---|---|---|
@@ -290,7 +311,7 @@ style: |
 
 ---
 
-# 11. AI 순수성 — 정의를 교정하다 (자체 검증)
+# 12. AI 순수성 — 정의를 교정하다 (자체 검증)
 
 기존 분류는 `데이터`·`클라우드`만으로 ai-pure 판정 → **58.6%가 비(非)AI 혼입**
 
@@ -308,7 +329,7 @@ style: |
 
 ---
 
-# 12. IT 사업유형 — 16범주
+# 13. IT 사업유형 — 16범주
 
 | 유형 | 비중 | 유형 | 비중 |
 |---|---|---|---|
@@ -322,7 +343,7 @@ style: |
 
 ---
 
-# 13. AI 예산의 역설
+# 14. AI 예산의 역설
 
 <div class="cards">
   <div class="card"><div class="n">9,000만</div><div class="l">ai-pure 중앙 예산</div></div>
@@ -336,7 +357,7 @@ style: |
 
 ---
 
-# 14. 실무 서비스 구상 — 제안서 자동생성 (Q③ 확장)
+# 15. 실무 서비스 구상 — 제안서 자동생성 (Q③ 확장)
 
 <div class="flow">
   <div class="step">신규 공고<b>나라장터 인입</b></div>
@@ -356,7 +377,7 @@ style: |
 
 ---
 
-# 15. AWS 인프라 & 대시보드
+# 16. AWS 인프라 & 대시보드
 
 <div class="flow">
   <div class="step">로컬 수집<b>Python</b></div>
@@ -375,7 +396,7 @@ style: |
 
 ---
 
-# 16. 결론 · 한계 · 향후
+# 17. 결론 · 한계 · 향후
 
 **결론**
 - 전처리 고도화로 '기타' **88.5%→0%**, H1·H3 **가설검정 지지**, 산업×유형 연관 확인
@@ -389,7 +410,7 @@ style: |
 
 ---
 
-# 17. 예상 질문 (Q&A)
+# 18. 예상 질문 (Q&A)
 
 > **Q. '기타 0%'는 분류를 잘한 건가, 축을 바꾼 건가?**
 → 후자. 공고명 키워드로는 한계 → 수요기관 성격으로 재정의. 한계도 명시.
