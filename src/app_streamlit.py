@@ -38,7 +38,9 @@ AI_PURE_KEYWORDS = [
     "클라우드",
 ]
 STOPWORDS = {"용역", "사업", "구매", "재공고", "공고", "입찰", "년도", "관련",
-             "위한", "대한", "기타", "외", "및", "년", "차", "제"}
+             "위한", "대한", "기타", "외", "및", "년", "차", "제",
+             "학년도", "연도", "차년도", "금년", "당해", "해당", "금년도",
+             "상반기", "하반기", "분기", "월", "일", "신규", "기존"}
 
 
 @st.cache_data
@@ -140,7 +142,11 @@ def page_keywords(df: pd.DataFrame, df_tok: pd.DataFrame) -> None:
     for nm in df["bidNtceNm"].dropna().astype(str):
         for tok in _re.split(r"[\s\(\)\[\]·,/]+", nm):
             tok = tok.strip()
-            if len(tok) >= 2 and tok not in STOPWORDS and not tok.isdigit():
+            if (len(tok) >= 2 and tok not in STOPWORDS
+                    and not _re.search(r"\d", tok)          # 연도·숫자 포함 토큰 제외
+                    and not tok.endswith("년도")
+                    and not tok.endswith("년차")
+                    and not tok.endswith("년")):
                 tokens.append(tok)
     if not tokens:
         st.info("키워드 없음")

@@ -33,3 +33,9 @@ secrets/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# 참조 데이터/미리보기/백업 제외
+external/
+reports/_preview/
+*.bak
+*.bak.md
